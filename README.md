@@ -13,7 +13,7 @@ A fully functional Windows desktop application built with Flutter for changing D
 - **Modern UI**: Clean, intuitive interface with Material Design 3 and support for light/dark themes.
 - **Logging**: Comprehensive logging for troubleshooting and monitoring.
 - **Extensible Architecture**: Built with MVVM pattern for easy addition of new features and providers.
-- **DPI Bypass**: Advanced feature to bypass Deep Packet Inspection (DPI) blocking using GoodbyeDPI.
+- **DPI Bypass**: Advanced feature with multiple bypass modes using bundled GoodbyeDPI executable.
 - **Unblock Websites**: Combined DNS + DPI bypass provides maximum website unblocking capability.
 
 ## Supported DNS Providers
@@ -25,8 +25,23 @@ Choose a DNS provider based on your needs. For maximum unblocking and privacy:
 - **Google Public DNS (8.8.8.8)**: Enhanced security and performance.
 
 For content filtering (may block some sites):
+
 - **Quad9**: Blocks malicious domains with threat intelligence.
 - **CleanBrowsing**: Family-friendly DNS with content filtering.
+
+## DPI Bypass Modes
+
+The app includes multiple DPI bypass modes powered by GoodbyeDPI, based on real-world tested configurations:
+
+- **Basic Bypass**: Simple bypass mode for most websites (`-1`)
+- **Standard Bypass**: Standard bypass with fake packet generation (`-1 --fake-gen=1`)
+- **Advanced Bypass**: Advanced bypass with custom fake packets
+- **Russia Blacklist**: Bypass with Russia-specific blacklist (`-9 --blacklist`)
+- **Russia DNS Redirect**: Russia bypass with DNS redirection and custom ports
+- **Universal Bypass**: Universal bypass for any country blocking (`-9`)
+- **YouTube Focus**: Optimized for YouTube unblocking with YouTube-specific blacklist
+
+Select the appropriate mode based on your ISP's blocking method and geographic location.
 
 ## How to Use
 
@@ -35,7 +50,7 @@ For content filtering (may block some sites):
 3. **View Current DNS**: The app displays the current DNS settings for the selected adapter.
 4. **Choose DNS Provider**: Browse the list of available DNS providers and select one that suits your needs.
 5. **Apply Changes**: Click the "Apply" button next to your chosen provider to change the DNS settings.
-6. **DPI Bypass (Advanced)**: For maximum unblocking, download GoodbyeDPI from GitHub and place `goodbyedpi.exe` in the app directory. Use "Start DPI Bypass" to bypass Deep Packet Inspection blocking.
+6. **DPI Bypass (Advanced)**: Select a DPI bypass mode from the dropdown and click "Start DPI Bypass" for maximum unblocking capability. GoodbyeDPI is bundled with the app.
 7. **Restore if Needed**: Use the "Restore to Default" button to revert to your ISP's default DNS settings.
 
 ## Requirements

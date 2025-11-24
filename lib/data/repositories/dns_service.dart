@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:path/path.dart' as path;
 import '../../core/utils/logger.dart';
+import '../models/dpi_bypass_mode.dart';
 
 /// Service for DNS operations on Windows using netsh commands.
 class DnsService {
@@ -8,17 +10,24 @@ class DnsService {
   /// Check if DPI bypass is running
   bool get isDpiBypassRunning => _dpiProcess != null;
 
-  /// Start DPI bypass using GoodbyeDPI
-  Future<void> startDpiBypass() async {
+  /// Start DPI bypass using GoodbyeDPI with specified mode
+  Future<void> startDpiBypass(DpiBypassMode mode) async {
     if (_dpiProcess != null) {
       logger.info('DPI bypass already running');
       return;
     }
 
     try {
-      // Assume goodbyedpi.exe is in the same directory as the app
-      final exePath = 'goodbyedpi.exe';
-      final args = ['-1', '--fake-gen=1', '--fake-from-hex=1603010200010001ffffff000100000020000a00080006001700180019000b00020100000d00120010040105010201040305030203040206010202040300050004010000000012000000170000'];
+      // Get the directory where the executable is located
+      final exeDir = path.dirname(Platform.resolvedExecutable);
+      final exePath = path.join(exeDir, 'goodbyedpi.exe');
+
+      // Check if the file exists
+      if (!File(exePath).existsSync()) {
+        throw Exception('goodbyedpi.exe not found in application directory');
+      }
+
+      final args = mode.args;
 
       logger.info('Starting DPI bypass: $exePath ${args.join(' ')}');
       _dpiProcess = await Process.start(exePath, args);
@@ -31,7 +40,7 @@ class DnsService {
       });
     } catch (e) {
       logger.severe('Failed to start DPI bypass: $e');
-      throw Exception('Failed to start DPI bypass. Make sure goodbyedpi.exe is available.');
+      throw Exception('Failed to start DPI bypass: $e');
     }
   }
 
@@ -55,7 +64,7 @@ class DnsService {
       final ipv4String = ipv4.map((ip) => '"$ip"').join(',');
       final command = 'Set-DnsClientServerAddress -InterfaceAlias "$adapter" -ServerAddresses ($ipv4String)';
       logger.info('Running PowerShell command: $command');
-      final result = await Process.run('powershell', ['-Command', command]);
+      final result = await Process.run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command]);
       logger.info('Command result: exitCode=${result.exitCode}, stdout=${result.stdout}, stderr=${result.stderr}');
       if (result.exitCode != 0) {
         final errorMsg = result.stderr.toString().isNotEmpty ? result.stderr : 'Access denied or invalid adapter name. Please check adapter name and ensure you are running as Administrator.';
@@ -67,7 +76,7 @@ class DnsService {
       final ipv6String = ipv6.map((ip) => '"$ip"').join(',');
       final command = 'Set-DnsClientServerAddress -InterfaceAlias "$adapter" -ServerAddresses ($ipv6String)';
       logger.info('Running PowerShell command: $command');
-      final result = await Process.run('powershell', ['-Command', command]);
+      final result = await Process.run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command]);
       logger.info('Command result: exitCode=${result.exitCode}, stdout=${result.stdout}, stderr=${result.stderr}');
       if (result.exitCode != 0) {
         final errorMsg = result.stderr.toString().isNotEmpty ? result.stderr : 'Access denied or invalid adapter name. Please check adapter name and ensure you are running as Administrator.';
@@ -89,7 +98,7 @@ class DnsService {
     logger.info('Restoring DNS for adapter: $adapter');
     final command = 'Set-DnsClientServerAddress -InterfaceAlias "$adapter" -ResetServerAddresses';
     logger.info('Running PowerShell command: $command');
-    final result = await Process.run('powershell', ['-Command', command]);
+    final result = await Process.run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command]);
     logger.info('Restore result: exitCode=${result.exitCode}, stdout=${result.stdout}, stderr=${result.stderr}');
     if (result.exitCode != 0) {
       final errorMsg = result.stderr.toString().isNotEmpty ? result.stderr : 'Access denied. Please run the app as Administrator.';
@@ -110,7 +119,7 @@ class DnsService {
     logger.info('Getting current DNS for adapter: $adapter');
     final command = 'Get-DnsClientServerAddress -InterfaceAlias "$adapter" | Select-Object -ExpandProperty ServerAddresses';
     logger.info('Running PowerShell command: $command');
-    final result = await Process.run('powershell', ['-Command', command]);
+    final result = await Process.run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command]);
     logger.info('Get DNS result: exitCode=${result.exitCode}, stdout=${result.stdout}, stderr=${result.stderr}');
     if (result.exitCode != 0) {
       throw Exception('Failed to get DNS: ${result.stderr}');
@@ -123,7 +132,7 @@ class DnsService {
     logger.info('Getting network adapters');
     final command = r'Get-NetAdapter | Where-Object {$_.Status -eq "Up"} | Select-Object -ExpandProperty Name';
     logger.info('Running PowerShell command: $command');
-    final result = await Process.run('powershell', ['-Command', command]);
+    final result = await Process.run('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command]);
     if (result.exitCode != 0) {
       logger.severe('Failed to get adapters: ${result.stderr}');
       throw Exception('Failed to get adapters: ${result.stderr}');

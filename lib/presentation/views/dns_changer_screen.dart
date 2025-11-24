@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/dns_changer_viewmodel.dart';
+import '../../data/models/dpi_bypass_mode.dart';
 
 /// Main screen for DNS Changer app.
 class DnsChangerScreen extends StatelessWidget {
@@ -53,9 +54,30 @@ class DnsChangerScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const SizedBox(height: 20),
                 const Text('DPI Bypass (Advanced):', style: TextStyle(fontSize: 18)),
-                const Text('Bypass ISP blocking using GoodbyeDPI. Requires goodbyedpi.exe in app directory.', style: TextStyle(fontSize: 12)),
+                const Text('Bypass Deep Packet Inspection (DPI) blocking using GoodbyeDPI. GoodbyeDPI is bundled with the app.', style: TextStyle(fontSize: 12)),
+                const SizedBox(height: 10),
+                const Text('Select DPI Bypass Mode:', style: TextStyle(fontSize: 14)),
+                DropdownButton<DpiBypassMode>(
+                  value: viewModel.selectedDpiMode,
+                  items: viewModel.dpiModes.map((mode) {
+                    return DropdownMenuItem(
+                      value: mode,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(mode.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(mode.description, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (mode) {
+                    if (mode != null) viewModel.selectDpiMode(mode);
+                  },
+                  isExpanded: true,
+                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     ElevatedButton(

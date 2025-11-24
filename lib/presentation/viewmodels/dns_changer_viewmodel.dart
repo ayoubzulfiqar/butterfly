@@ -8,6 +8,7 @@ import '../../domain/usecases/get_current_dns_usecase.dart';
 import '../../domain/usecases/get_adapters_usecase.dart';
 import '../../domain/usecases/start_dpi_bypass_usecase.dart';
 import '../../domain/usecases/stop_dpi_bypass_usecase.dart';
+import '../../data/models/dpi_bypass_mode.dart';
 import '../../data/models/dns_provider.dart';
 import '../../core/utils/logger.dart';
 
@@ -31,6 +32,7 @@ class DnsChangerViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String _message = '';
   bool _isDpiBypassRunning = false;
+  DpiBypassMode _selectedDpiMode = DpiBypassModes.all[0];
 
   DnsChangerViewModel({
     required this.dnsProviderRepository,
@@ -53,6 +55,8 @@ class DnsChangerViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get message => _message;
   bool get isDpiBypassRunning => _isDpiBypassRunning;
+  DpiBypassMode get selectedDpiMode => _selectedDpiMode;
+  List<DpiBypassMode> get dpiModes => DpiBypassModes.all;
 
   void loadData() {
     _providers = getProvidersUseCase.execute();
@@ -139,15 +143,20 @@ class DnsChangerViewModel extends ChangeNotifier {
     _message = '';
     notifyListeners();
     try {
-      await startDpiBypassUseCase.execute();
+      await startDpiBypassUseCase.execute(_selectedDpiMode);
       _isDpiBypassRunning = true;
-      _message = 'DPI bypass started';
+      _message = 'DPI bypass started (${_selectedDpiMode.name})';
       logger.info(_message);
     } catch (e) {
       _message = 'Failed to start DPI bypass: $e';
       logger.severe(_message);
     }
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void selectDpiMode(DpiBypassMode mode) {
+    _selectedDpiMode = mode;
     notifyListeners();
   }
 
