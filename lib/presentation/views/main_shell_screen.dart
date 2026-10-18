@@ -9,6 +9,7 @@ import 'pages/dashboard_page.dart';
 import 'pages/diagnostics_page.dart';
 import 'pages/dns_resolvers_page.dart';
 import 'pages/dpi_bypass_page.dart';
+import 'pages/simple_shield_screen.dart';
 import 'pages/tools_page.dart';
 
 /// Primary desktop shell providing Windows 11 Fluent navigation and header.
@@ -20,7 +21,32 @@ class MainShellScreen extends StatelessWidget {
     final navVm = context.watch<NavigationViewModel>();
     final dnsVm = context.watch<NetworkDnsViewModel>();
 
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      layoutBuilder: (currentChild, previousChildren) {
+        return Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            ...previousChildren,
+            if (currentChild != null) currentChild,
+          ],
+        );
+      },
+      child: navVm.viewMode == AppViewMode.simple
+          ? const SimpleShieldScreen(key: ValueKey('simple_shield'))
+          : _buildStudioShell(context, navVm, dnsVm),
+    );
+  }
+
+  Widget _buildStudioShell(
+    BuildContext context,
+    NavigationViewModel navVm,
+    NetworkDnsViewModel dnsVm,
+  ) {
     return Scaffold(
+      key: const ValueKey('studio_shell'),
       body: Column(
         children: [
           ElevationBanner(isElevated: dnsVm.isAdministrator),
@@ -142,12 +168,23 @@ class MainShellScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
+          const SizedBox(width: 12),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
+              OutlinedButton.icon(
+                icon: const Icon(Icons.shield_outlined, size: 14),
+                label: const Text('Simple Shield'),
+                onPressed: () => navVm.setViewMode(AppViewMode.simple),
+              ),
+              const SizedBox(width: 12),
               StatusBadge(
                 label: dnsVm.isAdministrator
                     ? 'Administrator'

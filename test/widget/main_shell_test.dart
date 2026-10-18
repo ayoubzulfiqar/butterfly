@@ -63,7 +63,7 @@ void main() {
         networkService: netService,
         repository: repo,
       );
-      final navVm = NavigationViewModel();
+      final navVm = NavigationViewModel(initialMode: AppViewMode.studio);
       final dpiVm = DpiViewModel(dpiService: dpiService);
       final diagVm = DiagnosticsViewModel();
       final toolsVm = ToolsViewModel(
@@ -112,6 +112,13 @@ void main() {
       await tester.tap(find.text('Diagnostics').first);
       await tester.pumpAndSettle();
       expect(find.textContaining('Clear Console'), findsWidgets);
+
+      // Tap Simple Shield button in header
+      await tester.tap(find.text('Simple Shield'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(navVm.viewMode, equals(AppViewMode.simple));
+      expect(find.textContaining('BUTTERFLY'), findsWidgets);
     },
   );
 }

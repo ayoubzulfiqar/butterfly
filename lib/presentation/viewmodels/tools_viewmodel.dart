@@ -146,6 +146,12 @@ class ToolsViewModel extends ChangeNotifier {
     });
   }
 
+  void clearMessages() {
+    _statusMessage = null;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   void _stopCountdown() {
     _countdownTimer?.cancel();
     _countdownTimer = null;
