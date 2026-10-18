@@ -85,8 +85,31 @@ class LinuxNetworkService implements INetworkService {
               continue;
             }
 
-            final isUp = operstate.toUpperCase() == 'UP';
+            final flags = (item['flags'] as List?)
+                    ?.map((f) => f.toString().toUpperCase())
+                    .toList() ??
+                [];
+            final isUp = operstate.toUpperCase() == 'UP' || flags.contains('UP');
             final dnsServers = dnsMap[ifname] ?? const [];
+
+            final List<String> ipv4 = [];
+            final List<String> ipv6 = [];
+            final addrInfo = item['addr_info'];
+            if (addrInfo is List) {
+              for (final addr in addrInfo) {
+                if (addr is Map<String, dynamic>) {
+                  final family = addr['family'] as String? ?? '';
+                  final local = addr['local'] as String? ?? '';
+                  if (local.isNotEmpty) {
+                    if (family == 'inet') {
+                      ipv4.add(local);
+                    } else if (family == 'inet6') {
+                      ipv6.add(local);
+                    }
+                  }
+                }
+              }
+            }
 
             adapters.add(
               NetworkAdapter(
@@ -94,8 +117,8 @@ class LinuxNetworkService implements INetworkService {
                 interfaceDescription: '$ifname ($linkType)',
                 isUp: isUp,
                 isDhcp: dnsServers.isEmpty,
-                ipv4Addresses: const [],
-                ipv6Addresses: const [],
+                ipv4Addresses: ipv4,
+                ipv6Addresses: ipv6,
                 dnsServers: dnsServers,
               ),
             );
@@ -110,14 +133,8 @@ class LinuxNetworkService implements INetworkService {
   @override
   Future<bool> isAdministrator() async {
     try {
-      final whoami = await Process.run('whoami', []);
-      if (whoami.stdout.toString().trim() == 'root') return true;
-
-      final pkexec = await Process.run('which', ['pkexec']);
-      if (pkexec.exitCode == 0) return true;
-
-      final sudo = await Process.run('which', ['sudo']);
-      return sudo.exitCode == 0;
+      final id = await Process.run('id', ['-u']);
+      return id.exitCode == 0 && id.stdout.toString().trim() == '0';
     } catch (_) {
       return false;
     }
@@ -130,7 +147,7 @@ class LinuxNetworkService implements INetworkService {
       'Discovering network adapters via ip and resolvectl',
     );
     try {
-      final linkResult = await Process.run('ip', ['-j', 'link']);
+      final linkResult = await Process.run('ip', ['-j', 'addr']);
       final dnsResult = await Process.run('resolvectl', ['dns']);
 
       final adapters = parseAdaptersFromOutput(

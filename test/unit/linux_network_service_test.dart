@@ -63,8 +63,15 @@ void main() {
         {
           "ifname": "wlp1s0",
           "operstate": "UP",
+          "flags": ["BROADCAST", "MULTICAST", "UP", "LOWER_UP"],
           "address": "00:11:22:33:44:55",
-          "link_type": "ether"
+          "link_type": "ether",
+          "addr_info": [
+            {
+              "family": "inet",
+              "local": "192.168.1.100"
+            }
+          ]
         },
         {
           "ifname": "lo",
@@ -90,6 +97,7 @@ void main() {
       final wifi = adapters.first;
       expect(wifi.name, equals('wlp1s0'));
       expect(wifi.isUp, isTrue);
+      expect(wifi.ipv4Addresses, equals(['192.168.1.100']));
       expect(wifi.dnsServers, equals(['1.1.1.1', '1.0.0.1']));
       expect(wifi.isDhcp, isFalse);
     });

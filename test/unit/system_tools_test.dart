@@ -72,6 +72,13 @@ void main() {
 
       final cancelCmd = SystemToolsServiceImpl.buildCancelShutdownCommand(isWindows: false);
       expect(cancelCmd, equals('shutdown -c'));
+
+      final withReason = SystemToolsServiceImpl.buildShutdownCommand(
+        const Duration(minutes: 30),
+        isWindows: false,
+        reason: 'Kernel update',
+      );
+      expect(withReason, equals('shutdown -h +30 "Kernel update"'));
     });
 
     test('builds adapter status command safely across OS', () {
@@ -90,12 +97,21 @@ void main() {
       expect(linuxCmd, equals('nmcli dev disconnect wlp1s0'));
     });
 
-    test('rejects malicious shell characters in interface commands', () {
+    test('rejects malicious shell characters and quotes in commands', () {
       expect(
         () => SystemToolsServiceImpl.buildSetInterfaceStatusCommand(
           'eth0; reboot',
           true,
           isWindows: false,
+        ),
+        throwsArgumentError,
+      );
+
+      expect(
+        () => SystemToolsServiceImpl.buildShutdownCommand(
+          const Duration(minutes: 5),
+          isWindows: true,
+          reason: 'Maintenance" /t 0 /f "',
         ),
         throwsArgumentError,
       );

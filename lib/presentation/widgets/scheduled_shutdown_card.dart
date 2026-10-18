@@ -61,6 +61,20 @@ class _ScheduledShutdownCardState extends State<ScheduledShutdownCard> {
                                   : 'Armed',
                               customColor: Colors.redAccent,
                             ),
+                            const SizedBox(width: 6),
+                            Builder(
+                              builder: (_) {
+                                final rem = shutdown.remainingDuration;
+                                final remText = (rem != null && rem.inSeconds > 0)
+                                    ? '${rem.inHours.toString().padLeft(2, '0')}:${(rem.inMinutes % 60).toString().padLeft(2, '0')}:${(rem.inSeconds % 60).toString().padLeft(2, '0')}'
+                                    : '00:00:00';
+                                return StatusBadge(
+                                  label: 'Remaining: $remText',
+                                  icon: Icons.timer_outlined,
+                                  customColor: Colors.orangeAccent,
+                                );
+                              },
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),

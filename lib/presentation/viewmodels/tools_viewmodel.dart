@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/entities/public_ip_info.dart';
@@ -12,6 +13,7 @@ class ToolsViewModel extends ChangeNotifier {
   ScheduledShutdownState _shutdownState = const ScheduledShutdownState.inactive();
   String? _errorMessage;
   String? _statusMessage;
+  Timer? _countdownTimer;
 
   ToolsViewModel({required ISystemToolsService toolsService})
       : _toolsService = toolsService;
@@ -63,6 +65,7 @@ class ToolsViewModel extends ChangeNotifier {
     if (success) {
       _shutdownState = await _toolsService.getShutdownStatus();
       _statusMessage = 'Shutdown successfully scheduled';
+      _startCountdownTicker();
     } else {
       _errorMessage = 'Failed to schedule system shutdown';
     }
@@ -77,6 +80,7 @@ class ToolsViewModel extends ChangeNotifier {
 
     final success = await _toolsService.cancelShutdown();
     if (success) {
+      _stopCountdownTicker();
       _shutdownState = const ScheduledShutdownState.inactive();
       _statusMessage = 'Scheduled shutdown cancelled';
     } else {
@@ -84,6 +88,31 @@ class ToolsViewModel extends ChangeNotifier {
     }
     notifyListeners();
     return success;
+  }
+
+  void _startCountdownTicker() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final remaining = _shutdownState.remainingDuration;
+      if (!_shutdownState.isActive ||
+          remaining == null ||
+          remaining.inSeconds <= 0) {
+        timer.cancel();
+        _shutdownState = const ScheduledShutdownState.inactive();
+      }
+      notifyListeners();
+    });
+  }
+
+  void _stopCountdownTicker() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
+  @override
+  void dispose() {
+    _stopCountdownTicker();
+    super.dispose();
   }
 
   void clearMessages() {

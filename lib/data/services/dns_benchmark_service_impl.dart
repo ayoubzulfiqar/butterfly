@@ -175,10 +175,13 @@ class DnsBenchmarkServiceImpl implements IDnsBenchmarkService {
       socket.listen((event) {
         if (event == RawSocketEvent.read) {
           final datagram = socket?.receive();
-          if (datagram != null) {
-            final parsed = parseIpFromDnsResponse(datagram.data);
-            if (!completer.isCompleted) {
-              completer.complete(parsed);
+          if (datagram != null && datagram.data.length >= 12) {
+            final responseTxId = (datagram.data[0] << 8) | datagram.data[1];
+            if (responseTxId == txId) {
+              final parsed = parseIpFromDnsResponse(datagram.data);
+              if (!completer.isCompleted) {
+                completer.complete(parsed);
+              }
             }
           }
         }
@@ -213,8 +216,13 @@ class DnsBenchmarkServiceImpl implements IDnsBenchmarkService {
       client.connectionTimeout = timeout;
       client.badCertificateCallback = (cert, host, port) => true;
 
-      final request = await client.getUrl(Uri.parse('https://$ip/'));
-      request.headers.set(HttpHeaders.hostHeader, hostname);
+      // Direct TCP connection to resolved server IP while preserving
+      // hostname in the TLS ClientHello SNI for accurate censorship detection.
+      client.connectionFactory = (uri, host, port) {
+        return Socket.startConnect(ip, port ?? 443);
+      };
+
+      final request = await client.getUrl(Uri.parse('https://$hostname/'));
       request.headers.set(HttpHeaders.connectionHeader, 'close');
 
       final response = await request.close().timeout(timeout);
@@ -331,10 +339,23 @@ class DnsBenchmarkServiceImpl implements IDnsBenchmarkService {
     await Future.wait(workers);
 
     results.sort((a, b) {
-      if (a.status == BenchmarkStatus.reachable && b.status != BenchmarkStatus.reachable) return -1;
-      if (a.status != BenchmarkStatus.reachable && b.status == BenchmarkStatus.reachable) return 1;
-      if (a.latencyMs == -1) return 1;
-      if (b.latencyMs == -1) return -1;
+      if (a.status == BenchmarkStatus.reachable &&
+          b.status != BenchmarkStatus.reachable) {
+        return -1;
+      }
+      if (a.status != BenchmarkStatus.reachable &&
+          b.status == BenchmarkStatus.reachable) {
+        return 1;
+      }
+      if (a.latencyMs == -1 && b.latencyMs == -1) {
+        return 0;
+      }
+      if (a.latencyMs == -1) {
+        return 1;
+      }
+      if (b.latencyMs == -1) {
+        return -1;
+      }
       return a.latencyMs.compareTo(b.latencyMs);
     });
 

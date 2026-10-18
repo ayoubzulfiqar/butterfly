@@ -287,8 +287,9 @@ class DnsProviderRepositoryImpl implements IDnsProviderRepository {
   }) async {
     final targetUrl = endpoint ??
         'https://raw.githubusercontent.com/DnsChanger/dnsChanger-desktop/store/servers_DB.json';
+    HttpClient? client;
     try {
-      final client = HttpClient();
+      client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 5);
       final request = await client.getUrl(Uri.parse(targetUrl));
       final response = await request.close();
@@ -296,17 +297,28 @@ class DnsProviderRepositoryImpl implements IDnsProviderRepository {
         final body = await response.transform(utf8.decoder).join();
         final parsed = parseRemoteCatalogJson(body);
         if (parsed.isNotEmpty) {
+          final merged = <DnsProvider>[];
+          final builtInMap = {for (final p in _builtInProviders) p.id: p};
+          for (final p in parsed) {
+            final builtIn = builtInMap[p.id];
+            if (builtIn != null) {
+              merged.add(builtIn.copyWith(
+                ipv4: p.ipv4.isNotEmpty ? p.ipv4 : builtIn.ipv4,
+                ipv6: p.ipv6.isNotEmpty ? p.ipv6 : builtIn.ipv6,
+              ));
+            } else {
+              merged.add(p);
+            }
+          }
           _syncedRemoteProviders.clear();
-          _syncedRemoteProviders.addAll(parsed);
+          _syncedRemoteProviders.addAll(merged);
           appLogger.info(
             'DnsProviderRepository',
             'Synced ${_syncedRemoteProviders.length} providers from remote catalog',
           );
-          client.close();
           return true;
         }
       }
-      client.close();
       return false;
     } catch (e) {
       appLogger.warning(
@@ -314,6 +326,8 @@ class DnsProviderRepositoryImpl implements IDnsProviderRepository {
         'Failed to sync remote catalog, using built-in catalog: $e',
       );
       return false;
+    } finally {
+      client?.close(force: true);
     }
   }
 

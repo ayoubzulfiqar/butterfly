@@ -10,7 +10,7 @@ import '../../domain/services/i_system_tools_service.dart';
 class SystemToolsServiceImpl implements ISystemToolsService {
   ScheduledShutdownState _shutdownState = const ScheduledShutdownState.inactive();
 
-  static final RegExp _disallowedCharsRegex = RegExp(r'[;&|`$><]');
+  static final RegExp _disallowedCharsRegex = RegExp(r'[;&|`$><"^\\%]');
 
   static String sanitizeInput(String input) {
     if (_disallowedCharsRegex.hasMatch(input)) {
@@ -33,7 +33,9 @@ class SystemToolsServiceImpl implements ISystemToolsService {
       return 'shutdown /s /t $seconds$reasonPart';
     } else {
       final minutes = max(1, (seconds / 60).ceil());
-      return 'shutdown -h +$minutes';
+      final sanitizedReason = reason != null ? sanitizeInput(reason) : null;
+      final reasonPart = sanitizedReason != null ? ' "$sanitizedReason"' : '';
+      return 'shutdown -h +$minutes$reasonPart';
     }
   }
 
