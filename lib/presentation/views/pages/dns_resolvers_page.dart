@@ -335,6 +335,8 @@ class DnsResolversPage extends StatelessWidget {
         return 'High Speed & Anycast';
       case DnsCategory.family:
         return 'Family & SafeSearch';
+      case DnsCategory.bypass:
+        return 'Anti-Sanction & Bypass';
       case DnsCategory.custom:
         return 'Custom';
     }

@@ -1,5 +1,5 @@
 /// Categories for DNS resolvers.
-enum DnsCategory { all, privacy, security, gaming, family, custom }
+enum DnsCategory { all, privacy, security, gaming, family, bypass, custom }
 
 /// Immutable model representing a DNS Provider with addresses and metadata.
 class DnsProvider {
