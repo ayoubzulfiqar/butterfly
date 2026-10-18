@@ -82,6 +82,9 @@ class MockRepo implements IDnsProviderRepository {
 
   @override
   Future<void> deleteCustomProvider(String id) async {}
+
+  @override
+  Future<bool> syncRemoteCatalog({String? endpoint}) async => true;
 }
 
 void main() {

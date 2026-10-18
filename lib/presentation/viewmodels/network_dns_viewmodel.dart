@@ -1,14 +1,18 @@
 import 'package:flutter/foundation.dart';
 import '../../core/utils/logger.dart';
+import '../../domain/entities/benchmark_target.dart';
+import '../../domain/entities/dns_benchmark_result.dart';
 import '../../domain/entities/dns_provider.dart';
 import '../../domain/entities/network_adapter.dart';
 import '../../domain/repositories/i_dns_provider_repository.dart';
+import '../../domain/services/i_dns_benchmark_service.dart';
 import '../../domain/services/i_network_service.dart';
 
 /// ViewModel managing network adapters, DNS selection, benchmarking, and cache.
 class NetworkDnsViewModel extends ChangeNotifier {
   final INetworkService networkService;
   final IDnsProviderRepository repository;
+  final IDnsBenchmarkService? benchmarkService;
 
   List<NetworkAdapter> _adapters = [];
   NetworkAdapter? _selectedAdapter;
@@ -20,6 +24,10 @@ class NetworkDnsViewModel extends ChangeNotifier {
   bool _isApplyingDns = false;
   bool _isFlushingCache = false;
   bool _isPinging = false;
+  bool _isBenchmarkingTarget = false;
+
+  BenchmarkTarget? _selectedBenchmarkTarget;
+  Map<String, DnsBenchmarkResult> _benchmarkResults = {};
 
   String _statusMessage = '';
   bool _isErrorStatus = false;
@@ -30,6 +38,7 @@ class NetworkDnsViewModel extends ChangeNotifier {
   NetworkDnsViewModel({
     required this.networkService,
     required this.repository,
+    this.benchmarkService,
   });
 
   List<NetworkAdapter> get adapters => _adapters;
@@ -42,6 +51,36 @@ class NetworkDnsViewModel extends ChangeNotifier {
   bool get isApplyingDns => _isApplyingDns;
   bool get isFlushingCache => _isFlushingCache;
   bool get isPinging => _isPinging;
+  bool get isBenchmarkingTarget => _isBenchmarkingTarget;
+  Map<String, DnsBenchmarkResult> get benchmarkResults => _benchmarkResults;
+
+  List<BenchmarkTarget> get benchmarkTargets =>
+      benchmarkService?.defaultTargets ??
+      const [
+        BenchmarkTarget(
+          key: 'chatgpt',
+          label: 'ChatGPT (OpenAI)',
+          url: 'https://chatgpt.com',
+        ),
+        BenchmarkTarget(
+          key: 'claude',
+          label: 'Claude (Anthropic)',
+          url: 'https://claude.ai',
+        ),
+        BenchmarkTarget(
+          key: 'youtube',
+          label: 'YouTube',
+          url: 'https://youtube.com',
+        ),
+        BenchmarkTarget(
+          key: 'google',
+          label: 'Google Search',
+          url: 'https://google.com',
+        ),
+      ];
+
+  BenchmarkTarget get selectedBenchmarkTarget =>
+      _selectedBenchmarkTarget ?? benchmarkTargets.first;
 
   String get statusMessage => _statusMessage;
   bool get isErrorStatus => _isErrorStatus;
@@ -253,5 +292,38 @@ class NetworkDnsViewModel extends ChangeNotifier {
     await repository.deleteCustomProvider(id);
     _providers = await repository.getAllProviders();
     notifyListeners();
+  }
+
+  void selectBenchmarkTarget(BenchmarkTarget target) {
+    _selectedBenchmarkTarget = target;
+    notifyListeners();
+  }
+
+  Future<void> runTargetBenchmark() async {
+    if (benchmarkService == null) return;
+    _isBenchmarkingTarget = true;
+    _statusMessage = '';
+    notifyListeners();
+
+    try {
+      final results = await benchmarkService!.benchmarkAllServers(
+        _providers,
+        selectedBenchmarkTarget,
+      );
+      final map = <String, DnsBenchmarkResult>{};
+      for (final res in results) {
+        map[res.providerKey] = res;
+      }
+      _benchmarkResults = map;
+      _statusMessage =
+          'Target benchmark complete for ${selectedBenchmarkTarget.label}';
+      _isErrorStatus = false;
+    } catch (e) {
+      _statusMessage = 'Target benchmark error: $e';
+      _isErrorStatus = true;
+    } finally {
+      _isBenchmarkingTarget = false;
+      notifyListeners();
+    }
   }
 }

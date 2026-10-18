@@ -9,6 +9,7 @@ import 'pages/dashboard_page.dart';
 import 'pages/diagnostics_page.dart';
 import 'pages/dns_resolvers_page.dart';
 import 'pages/dpi_bypass_page.dart';
+import 'pages/tools_page.dart';
 
 /// Primary desktop shell providing Windows 11 Fluent navigation and header.
 class MainShellScreen extends StatelessWidget {
@@ -40,6 +41,7 @@ class MainShellScreen extends StatelessWidget {
                             DashboardPage(),
                             DnsResolversPage(),
                             DpiBypassPage(),
+                            ToolsPage(),
                             DiagnosticsPage(),
                           ],
                         ),
@@ -114,6 +116,11 @@ class MainShellScreen extends StatelessWidget {
           label: Text('DPI Bypass'),
         ),
         NavigationRailDestination(
+          icon: Icon(Icons.build_outlined),
+          selectedIcon: Icon(Icons.build_rounded),
+          label: Text('Tools'),
+        ),
+        NavigationRailDestination(
           icon: Icon(Icons.terminal_outlined),
           selectedIcon: Icon(Icons.terminal_rounded),
           label: Text('Diagnostics'),
@@ -170,7 +177,6 @@ class MainShellScreen extends StatelessWidget {
     );
   }
 
-
   String _getTitleForTab(NavigationTab tab) {
     switch (tab) {
       case NavigationTab.dashboard:
@@ -179,6 +185,8 @@ class MainShellScreen extends StatelessWidget {
         return 'DNS Resolver Catalog';
       case NavigationTab.dpiBypass:
         return 'GoodbyeDPI Bypass Studio';
+      case NavigationTab.tools:
+        return 'Tools & Diagnostics Studio';
       case NavigationTab.diagnostics:
         return 'Diagnostics & Live Telemetry';
     }

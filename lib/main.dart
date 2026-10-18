@@ -1,20 +1,21 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/themes/app_theme.dart';
 import 'core/utils/logger.dart';
 import 'data/repositories/dns_provider_repository_impl.dart';
-import 'data/services/mock_dpi_service.dart';
-import 'data/services/mock_network_service.dart';
-import 'data/services/windows_dpi_service.dart';
-import 'data/services/windows_network_service.dart';
+import 'data/services/dns_benchmark_service_impl.dart';
+import 'data/services/platform_service_factory.dart';
+import 'data/services/system_tools_service_impl.dart';
 import 'domain/repositories/i_dns_provider_repository.dart';
+import 'domain/services/i_dns_benchmark_service.dart';
 import 'domain/services/i_dpi_service.dart';
 import 'domain/services/i_network_service.dart';
+import 'domain/services/i_system_tools_service.dart';
 import 'presentation/viewmodels/diagnostics_viewmodel.dart';
 import 'presentation/viewmodels/dpi_viewmodel.dart';
 import 'presentation/viewmodels/navigation_viewmodel.dart';
 import 'presentation/viewmodels/network_dns_viewmodel.dart';
+import 'presentation/viewmodels/tools_viewmodel.dart';
 import 'presentation/views/main_shell_screen.dart';
 
 void main() {
@@ -27,12 +28,16 @@ class ButterflyApp extends StatefulWidget {
   final INetworkService? networkService;
   final IDpiService? dpiService;
   final IDnsProviderRepository? repository;
+  final ISystemToolsService? toolsService;
+  final IDnsBenchmarkService? benchmarkService;
 
   const ButterflyApp({
     super.key,
     this.networkService,
     this.dpiService,
     this.repository,
+    this.toolsService,
+    this.benchmarkService,
   });
 
   @override
@@ -43,19 +48,26 @@ class _ButterflyAppState extends State<ButterflyApp> {
   late final INetworkService _networkService;
   late final IDpiService _dpiService;
   late final IDnsProviderRepository _repository;
+  late final ISystemToolsService _toolsService;
+  late final IDnsBenchmarkService _benchmarkService;
 
   @override
   void initState() {
     super.initState();
-    _networkService = widget.networkService ??
-        (Platform.isWindows
-            ? WindowsNetworkService()
-            : MockNetworkService());
+    _networkService =
+        widget.networkService ?? PlatformServiceFactory.createNetworkService();
 
-    _dpiService = widget.dpiService ??
-        (Platform.isWindows ? WindowsDpiService() : MockDpiService());
+    _dpiService = widget.dpiService ?? PlatformServiceFactory.createDpiService();
 
     _repository = widget.repository ?? DnsProviderRepositoryImpl();
+    _toolsService = widget.toolsService ?? SystemToolsServiceImpl();
+    _benchmarkService = widget.benchmarkService ?? DnsBenchmarkServiceImpl();
+
+    // Asynchronously synchronize remote provider catalog in the background
+    _repository.syncRemoteCatalog().catchError((error) {
+      appLogger.warning('ButterflyApp', 'Remote catalog sync fallback: $error');
+      return false;
+    });
   }
 
   @override
@@ -75,6 +87,7 @@ class _ButterflyAppState extends State<ButterflyApp> {
           create: (_) => NetworkDnsViewModel(
             networkService: _networkService,
             repository: _repository,
+            benchmarkService: _benchmarkService,
           )..loadInitialData(),
         ),
         ChangeNotifierProvider<DpiViewModel>(
@@ -82,6 +95,9 @@ class _ButterflyAppState extends State<ButterflyApp> {
         ),
         ChangeNotifierProvider<DiagnosticsViewModel>(
           create: (_) => DiagnosticsViewModel(),
+        ),
+        ChangeNotifierProvider<ToolsViewModel>(
+          create: (_) => ToolsViewModel(toolsService: _toolsService),
         ),
       ],
       child: MaterialApp(

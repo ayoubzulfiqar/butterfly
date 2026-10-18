@@ -13,4 +13,7 @@ abstract class IDnsProviderRepository {
 
   /// Deletes a custom user-defined DNS provider by [id].
   Future<void> deleteCustomProvider(String id);
+
+  /// Synchronizes remote provider catalog definitions with local fallback.
+  Future<bool> syncRemoteCatalog({String? endpoint});
 }

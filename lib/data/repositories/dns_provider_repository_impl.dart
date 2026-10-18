@@ -281,14 +281,16 @@ class DnsProviderRepositoryImpl implements IDnsProviderRepository {
     }
   }
 
-  Future<void> syncRemoteCatalog({
-    String url =
-        'https://raw.githubusercontent.com/DnsChanger/dnsChanger-desktop/store/servers_DB.json',
+  @override
+  Future<bool> syncRemoteCatalog({
+    String? endpoint,
   }) async {
+    final targetUrl = endpoint ??
+        'https://raw.githubusercontent.com/DnsChanger/dnsChanger-desktop/store/servers_DB.json';
     try {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 5);
-      final request = await client.getUrl(Uri.parse(url));
+      final request = await client.getUrl(Uri.parse(targetUrl));
       final response = await request.close();
       if (response.statusCode == 200) {
         final body = await response.transform(utf8.decoder).join();
@@ -300,14 +302,18 @@ class DnsProviderRepositoryImpl implements IDnsProviderRepository {
             'DnsProviderRepository',
             'Synced ${_syncedRemoteProviders.length} providers from remote catalog',
           );
+          client.close();
+          return true;
         }
       }
       client.close();
+      return false;
     } catch (e) {
       appLogger.warning(
         'DnsProviderRepository',
         'Failed to sync remote catalog, using built-in catalog: $e',
       );
+      return false;
     }
   }
 

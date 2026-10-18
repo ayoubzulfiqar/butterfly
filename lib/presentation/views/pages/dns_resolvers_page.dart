@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../domain/entities/benchmark_target.dart';
+import '../../../domain/entities/dns_benchmark_result.dart';
 import '../../../domain/entities/dns_provider.dart';
 import '../../viewmodels/network_dns_viewmodel.dart';
 import '../../widgets/custom_dns_dialog.dart';
@@ -129,6 +131,61 @@ class DnsResolversPage extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
+              children: [
+                const Icon(Icons.travel_explore_rounded, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'Censorship Probe Target:',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<BenchmarkTarget>(
+                      value: dnsVm.selectedBenchmarkTarget,
+                      isDense: true,
+                      items: dnsVm.benchmarkTargets.map((target) {
+                        return DropdownMenuItem<BenchmarkTarget>(
+                          value: target,
+                          child: Text(
+                            target.label,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) dnsVm.selectBenchmarkTarget(val);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.tonalIcon(
+                  icon: dnsVm.isBenchmarkingTarget
+                      ? const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.radar_rounded, size: 16),
+                  label: const Text('Benchmark Target'),
+                  onPressed: dnsVm.isBenchmarkingTarget
+                      ? null
+                      : dnsVm.runTargetBenchmark,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
               children: DnsCategory.values.map((cat) {
                 final isSelected = dnsVm.selectedCategory == cat;
                 return Padding(
@@ -160,11 +217,26 @@ class DnsResolversPage extends StatelessWidget {
     NetworkDnsViewModel dnsVm,
     DnsProvider provider,
   ) {
+    final benchmarkResult = dnsVm.benchmarkResults[provider.id];
+
     return FluentCard(
       title: provider.name,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (benchmarkResult != null) ...[
+            StatusBadge(
+              label:
+                  '${benchmarkResult.status.name.toUpperCase()} (${benchmarkResult.latencyMs}ms)',
+              icon: benchmarkResult.status == BenchmarkStatus.reachable
+                  ? Icons.check_circle_rounded
+                  : Icons.block_rounded,
+              customColor: benchmarkResult.status == BenchmarkStatus.reachable
+                  ? AppTheme.successGreen
+                  : AppTheme.dangerRed,
+            ),
+            const SizedBox(width: 8),
+          ],
           if (provider.latencyMs != null)
             StatusBadge(
               label: '${provider.latencyMs} ms',

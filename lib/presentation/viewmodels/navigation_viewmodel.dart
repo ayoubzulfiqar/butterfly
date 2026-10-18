@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Navigation destinations available in the enterprise desktop shell.
-enum NavigationTab { dashboard, dnsResolvers, dpiBypass, diagnostics }
+enum NavigationTab { dashboard, dnsResolvers, dpiBypass, tools, diagnostics }
 
 /// Manages active navigation tab and global UI view switching.
 class NavigationViewModel extends ChangeNotifier {
