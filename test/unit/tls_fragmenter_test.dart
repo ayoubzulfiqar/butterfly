@@ -98,5 +98,18 @@ void main() {
       expect(chunks.length, equals(1));
       expect(chunks.first, equals(plainHttp));
     });
+
+    test('split with MethodRecord creates multiple valid TLS 0x16 records', () {
+      final packet = buildSyntheticClientHello('example.org');
+      final records = fragmenter.split(packet, TlsFragMethod.record, chunks: 2);
+
+      expect(records.length, greaterThan(1));
+      for (final rec in records) {
+        expect(rec[0], equals(0x16)); // Handshake
+        expect(rec.length, greaterThan(5)); // Record header + payload
+        final payloadLen = (rec[3] << 8) | rec[4];
+        expect(rec.length - 5, equals(payloadLen));
+      }
+    });
   });
 }

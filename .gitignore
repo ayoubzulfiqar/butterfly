@@ -47,3 +47,4 @@ app.*.map.json
 
 providers.md
 assets
+.superpowers/

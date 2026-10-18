@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/themes/app_theme.dart';
 import '../../domain/services/cloudflare_scanner_service.dart';
+import '../viewmodels/network_dns_viewmodel.dart';
 import '../viewmodels/tools_viewmodel.dart';
 import 'fluent_card.dart';
 import 'status_badge.dart';
@@ -140,6 +141,43 @@ class _CleanIpTile extends StatelessWidget {
                 label: item.isClean ? 'CLEAN' : 'BLOCKED',
                 isSuccess: item.isClean,
               ),
+              if (item.isClean) ...[
+                const SizedBox(width: 8),
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    side: BorderSide(
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final dnsVm = context.read<NetworkDnsViewModel>();
+                    final success = await dnsVm.applyCustomDns(
+                      primary: item.ip,
+                      secondary: '1.0.0.1',
+                      name: 'Cloudflare Clean-IP (${item.ip})',
+                    );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? 'Applied ${item.ip} as DNS'
+                                : (dnsVm.statusMessage.isNotEmpty
+                                    ? dnsVm.statusMessage
+                                    : 'Failed to apply DNS'),
+                          ),
+                          backgroundColor:
+                              success ? AppTheme.successGreen : AppTheme.dangerRed,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Apply', style: TextStyle(fontSize: 11)),
+                ),
+              ],
             ],
           ),
         ],

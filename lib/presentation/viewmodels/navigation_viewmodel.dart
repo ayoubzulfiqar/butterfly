@@ -4,7 +4,14 @@ import 'package:flutter/foundation.dart';
 enum AppViewMode { simple, studio }
 
 /// Navigation destinations available in the enterprise desktop shell.
-enum NavigationTab { dashboard, dnsResolvers, dpiBypass, tools, diagnostics }
+enum NavigationTab {
+  dashboard,
+  dnsResolvers,
+  dpiBypass,
+  proxyFrag,
+  tools,
+  diagnostics,
+}
 
 /// Manages active navigation tab and global UI view switching.
 class NavigationViewModel extends ChangeNotifier {

@@ -60,25 +60,29 @@ class CloudflareScannerServiceImpl implements ICloudflareScannerService {
 
     _progressController.add(0.0);
 
-    for (final ip in ips) {
-      try {
-        final latency = await _probeFn(ip);
-        scanned++;
-        _progressController.add(scanned / ips.length);
-
-        if (latency != null) {
-          results.add(CloudflareCleanIp(
-            ip: ip,
-            latencyMs: latency,
-            packetLoss: 0.0,
-            isClean: true,
-          ));
+    const poolSize = 4;
+    for (var i = 0; i < ips.length; i += poolSize) {
+      final batch = ips.skip(i).take(poolSize);
+      await Future.wait(batch.map((ip) async {
+        try {
+          final latency = await _probeFn(ip);
+          if (latency != null) {
+            results.add(CloudflareCleanIp(
+              ip: ip,
+              latencyMs: latency,
+              packetLoss: 0.0,
+              isClean: true,
+            ));
+          }
+        } catch (e) {
+          appLogger.warning('CfScan', 'Probe failed for $ip: $e');
+        } finally {
+          scanned++;
+          if (!_progressController.isClosed) {
+            _progressController.add(scanned / ips.length);
+          }
         }
-      } catch (e) {
-        scanned++;
-        _progressController.add(scanned / ips.length);
-        appLogger.warning('CfScan', 'Probe failed for $ip: $e');
-      }
+      }));
     }
 
     // Sort by lowest latency

@@ -89,6 +89,7 @@ void main() {
       expect(find.text('Dashboard'), findsWidgets);
       expect(find.text('DNS Resolvers'), findsWidgets);
       expect(find.text('DPI Bypass'), findsWidgets);
+      expect(find.text('Proxy & TLS Frag'), findsWidgets);
       expect(find.text('Tools'), findsWidgets);
       expect(find.text('Diagnostics'), findsWidgets);
 
@@ -102,6 +103,11 @@ void main() {
       await tester.tap(find.text('DPI Bypass').first);
       await tester.pumpAndSettle();
       expect(find.textContaining('GoodbyeDPI'), findsWidgets);
+
+      // Tap Proxy Frag
+      await tester.tap(find.text('Proxy & TLS Frag').first);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Driverless TLS Proxy'), findsWidgets);
 
       // Tap Tools Studio
       await tester.tap(find.text('Tools').first);

@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/theme/cyber_theme.dart';
 import 'core/themes/app_theme.dart';
 import 'core/utils/logger.dart';
 import 'data/repositories/dns_provider_repository_impl.dart';
+import 'data/services/cloudflare_scanner_service_impl.dart';
 import 'data/services/dns_benchmark_service_impl.dart';
+import 'data/services/dns_safety_net_service_impl.dart';
 import 'data/services/platform_service_factory.dart';
 import 'data/services/system_tools_service_impl.dart';
+import 'data/services/tls_fragmenter_service_impl.dart';
 import 'domain/repositories/i_dns_provider_repository.dart';
+import 'domain/services/cloudflare_scanner_service.dart';
+import 'domain/services/dns_safety_net_service.dart';
 import 'domain/services/i_dns_benchmark_service.dart';
 import 'domain/services/i_dpi_service.dart';
 import 'domain/services/i_network_service.dart';
 import 'domain/services/i_system_tools_service.dart';
+import 'domain/services/tls_fragmenter.dart';
 import 'presentation/viewmodels/diagnostics_viewmodel.dart';
 import 'presentation/viewmodels/dpi_viewmodel.dart';
 import 'presentation/viewmodels/navigation_viewmodel.dart';
@@ -30,6 +37,9 @@ class ButterflyApp extends StatefulWidget {
   final IDnsProviderRepository? repository;
   final ISystemToolsService? toolsService;
   final IDnsBenchmarkService? benchmarkService;
+  final IDnsSafetyNetService? safetyNetService;
+  final ICloudflareScannerService? cfScannerService;
+  final ITlsFragmenterService? tlsFragmenterService;
 
   const ButterflyApp({
     super.key,
@@ -38,6 +48,9 @@ class ButterflyApp extends StatefulWidget {
     this.repository,
     this.toolsService,
     this.benchmarkService,
+    this.safetyNetService,
+    this.cfScannerService,
+    this.tlsFragmenterService,
   });
 
   @override
@@ -50,6 +63,9 @@ class _ButterflyAppState extends State<ButterflyApp> {
   late final IDnsProviderRepository _repository;
   late final ISystemToolsService _toolsService;
   late final IDnsBenchmarkService _benchmarkService;
+  late final IDnsSafetyNetService _safetyNetService;
+  late final ICloudflareScannerService _cfScannerService;
+  late final ITlsFragmenterService _tlsFragmenterService;
 
   @override
   void initState() {
@@ -62,6 +78,9 @@ class _ButterflyAppState extends State<ButterflyApp> {
     _repository = widget.repository ?? DnsProviderRepositoryImpl();
     _toolsService = widget.toolsService ?? SystemToolsServiceImpl();
     _benchmarkService = widget.benchmarkService ?? DnsBenchmarkServiceImpl();
+    _safetyNetService = widget.safetyNetService ?? DnsSafetyNetServiceImpl();
+    _cfScannerService = widget.cfScannerService ?? CloudflareScannerServiceImpl();
+    _tlsFragmenterService = widget.tlsFragmenterService ?? TlsFragmenterServiceImpl();
 
     // Asynchronously synchronize remote provider catalog in the background
     _repository.syncRemoteCatalog().catchError((error) {
@@ -73,6 +92,7 @@ class _ButterflyAppState extends State<ButterflyApp> {
   @override
   void dispose() {
     _dpiService.dispose();
+    _tlsFragmenterService.stop();
     super.dispose();
   }
 
@@ -80,6 +100,7 @@ class _ButterflyAppState extends State<ButterflyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider<ITlsFragmenterService>.value(value: _tlsFragmenterService),
         ChangeNotifierProvider<NavigationViewModel>(
           create: (_) => NavigationViewModel(),
         ),
@@ -88,6 +109,7 @@ class _ButterflyAppState extends State<ButterflyApp> {
             networkService: _networkService,
             repository: _repository,
             benchmarkService: _benchmarkService,
+            safetyNetService: _safetyNetService,
           )..loadInitialData(),
         ),
         ChangeNotifierProvider<DpiViewModel>(
@@ -97,15 +119,18 @@ class _ButterflyAppState extends State<ButterflyApp> {
           create: (_) => DiagnosticsViewModel(),
         ),
         ChangeNotifierProvider<ToolsViewModel>(
-          create: (_) => ToolsViewModel(toolsService: _toolsService),
+          create: (_) => ToolsViewModel(
+            toolsService: _toolsService,
+            cfScannerService: _cfScannerService,
+          ),
         ),
       ],
       child: MaterialApp(
         title: 'Butterfly - Enterprise DNS Suite',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.fluentLight,
-        darkTheme: AppTheme.fluentDark,
-        themeMode: ThemeMode.system,
+        darkTheme: CyberTheme.darkTheme,
+        themeMode: ThemeMode.dark,
         home: const MainShellScreen(),
       ),
     );

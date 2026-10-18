@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../domain/services/tls_fragmenter.dart';
 import '../../widgets/fluent_card.dart';
@@ -16,6 +17,29 @@ class _ProxyFragmentationPageState extends State<ProxyFragmentationPage> {
   TlsFragMethod _selectedMethod = TlsFragMethod.both;
   bool _isProxyRunning = false;
   final int _proxyPort = 8085;
+
+  ITlsFragmenterService? _getService() {
+    try {
+      return Provider.of<ITlsFragmenterService?>(context, listen: false);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _toggleProxy() async {
+    final service = _getService();
+    if (_isProxyRunning) {
+      if (service != null) {
+        await service.stop();
+      }
+      setState(() => _isProxyRunning = false);
+    } else {
+      if (service != null) {
+        await service.start(port: _proxyPort, method: _selectedMethod);
+      }
+      setState(() => _isProxyRunning = true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,26 +92,29 @@ class _ProxyFragmentationPageState extends State<ProxyFragmentationPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Selected Fragmentation: ${_methodName(_selectedMethod)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selected Fragmentation: ${_methodName(_selectedMethod)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Listens on 127.0.0.1:$_proxyPort for browser/app HTTP CONNECT requests',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 4),
+                        Text(
+                          'Listens on 127.0.0.1:$_proxyPort for browser/app HTTP CONNECT requests',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 16),
                   ElevatedButton.icon(
                     icon: Icon(
                       _isProxyRunning
@@ -105,11 +132,7 @@ class _ProxyFragmentationPageState extends State<ProxyFragmentationPage> {
                         vertical: 14,
                       ),
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isProxyRunning = !_isProxyRunning;
-                      });
-                    },
+                    onPressed: _toggleProxy,
                   ),
                 ],
               ),

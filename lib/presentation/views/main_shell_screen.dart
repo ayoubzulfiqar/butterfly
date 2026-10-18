@@ -9,6 +9,7 @@ import 'pages/dashboard_page.dart';
 import 'pages/diagnostics_page.dart';
 import 'pages/dns_resolvers_page.dart';
 import 'pages/dpi_bypass_page.dart';
+import 'pages/proxy_fragmentation_page.dart';
 import 'pages/simple_shield_screen.dart';
 import 'pages/tools_page.dart';
 
@@ -67,6 +68,7 @@ class MainShellScreen extends StatelessWidget {
                             DashboardPage(),
                             DnsResolversPage(),
                             DpiBypassPage(),
+                            ProxyFragmentationPage(),
                             ToolsPage(),
                             DiagnosticsPage(),
                           ],
@@ -140,6 +142,11 @@ class MainShellScreen extends StatelessWidget {
           icon: Icon(Icons.shield_outlined),
           selectedIcon: Icon(Icons.shield_rounded),
           label: Text('DPI Bypass'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.alt_route_outlined),
+          selectedIcon: Icon(Icons.alt_route_rounded),
+          label: Text('Proxy & TLS Frag'),
         ),
         NavigationRailDestination(
           icon: Icon(Icons.build_outlined),
@@ -221,7 +228,9 @@ class MainShellScreen extends StatelessWidget {
       case NavigationTab.dnsResolvers:
         return 'DNS Resolver Catalog';
       case NavigationTab.dpiBypass:
-        return 'GoodbyeDPI Bypass Studio';
+        return 'zapret2 DPI Bypass Studio';
+      case NavigationTab.proxyFrag:
+        return 'Driverless TLS Proxy & Fragmentation';
       case NavigationTab.tools:
         return 'Tools & Diagnostics Studio';
       case NavigationTab.diagnostics:

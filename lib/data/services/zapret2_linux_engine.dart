@@ -59,8 +59,8 @@ table inet butterfly_dpi {
     type filter hook postrouting priority 99; policy accept;
     meta mark & $hexFwmark != 0 ct mark set ct mark | $hexFwmark accept
     oifname "lo" accept
-    meta l4proto tcp tcp dport { 80, 443 } ct original packets 1-20 queue num $queueNum bypass
-    meta l4proto udp udp dport 443 ct original packets 1-20 queue num $queueNum bypass
+    meta l4proto tcp tcp dport { 80, 443 } ct original packets 1-20 queue flags bypass to $queueNum
+    meta l4proto udp udp dport 443 ct original packets 1-20 queue flags bypass to $queueNum
   }
   chain pre {
     type filter hook prerouting priority -99; policy accept;

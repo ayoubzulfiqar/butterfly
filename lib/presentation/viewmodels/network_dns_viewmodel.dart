@@ -5,6 +5,7 @@ import '../../domain/entities/dns_benchmark_result.dart';
 import '../../domain/entities/dns_provider.dart';
 import '../../domain/entities/network_adapter.dart';
 import '../../domain/repositories/i_dns_provider_repository.dart';
+import '../../domain/services/dns_safety_net_service.dart';
 import '../../domain/services/i_dns_benchmark_service.dart';
 import '../../domain/services/i_network_service.dart';
 
@@ -13,6 +14,7 @@ class NetworkDnsViewModel extends ChangeNotifier {
   final INetworkService networkService;
   final IDnsProviderRepository repository;
   final IDnsBenchmarkService? benchmarkService;
+  final IDnsSafetyNetService? safetyNetService;
 
   List<NetworkAdapter> _adapters = [];
   NetworkAdapter? _selectedAdapter;
@@ -39,6 +41,7 @@ class NetworkDnsViewModel extends ChangeNotifier {
     required this.networkService,
     required this.repository,
     this.benchmarkService,
+    this.safetyNetService,
   });
 
   List<NetworkAdapter> get adapters => _adapters;
@@ -116,6 +119,22 @@ class NetworkDnsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (safetyNetService != null) {
+        try {
+          if (await safetyNetService!.hasPendingRestore()) {
+            final snapshot = await safetyNetService!.readSnapshot();
+            if (snapshot != null) {
+              appLogger.warning('NetworkDnsViewModel',
+                  'Pending DNS snapshot detected from ungraceful shutdown. Restoring ${snapshot.interfaceName}...');
+              await safetyNetService!.restoreOriginalDns(networkService);
+              _statusMessage = 'Safety Net: Restored network after previous ungraceful shutdown';
+            }
+          }
+        } catch (e) {
+          appLogger.warning('NetworkDnsViewModel', 'Safety net check failed: $e');
+        }
+      }
+
       _isAdministrator = await networkService.isAdministrator();
       _providers = await repository.getAllProviders();
       _adapters = await networkService.getAdapters();
@@ -196,6 +215,9 @@ class NetworkDnsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (safetyNetService != null) {
+        await safetyNetService!.snapshotCurrentDns(_selectedAdapter!);
+      }
       await networkService.setDns(
         _selectedAdapter!.name,
         provider.ipv4,
@@ -215,6 +237,28 @@ class NetworkDnsViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> applyCustomDns({
+    required String primary,
+    String? secondary,
+    String name = 'Custom Clean-IP',
+  }) async {
+    return applyDns(
+      DnsProvider(
+        id: 'clean_ip_${primary.replaceAll('.', '_')}',
+        name: name,
+        description: 'Cloudflare Anycast Clean-IP Resolver ($primary)',
+        category: DnsCategory.custom,
+        features: const ['Anycast', 'Clean-IP'],
+        ipv4: [primary, ?secondary],
+        ipv6: const [],
+        isCustom: true,
+      ),
+    );
+  }
+
+  bool get isSafetyNetArmed =>
+      safetyNetService != null && _selectedAdapter != null && _currentDnsServers.isNotEmpty;
+
   Future<bool> restoreDhcp() async {
     if (_selectedAdapter == null) {
       _statusMessage = 'No network adapter selected';
@@ -228,7 +272,11 @@ class NetworkDnsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await networkService.restoreDns(_selectedAdapter!.name);
+      if (safetyNetService != null) {
+        await safetyNetService!.restoreOriginalDns(networkService);
+      } else {
+        await networkService.restoreDns(_selectedAdapter!.name);
+      }
       _statusMessage = 'Restored DNS settings to DHCP (Automatic)';
       _isErrorStatus = false;
       await _fetchCurrentDns();

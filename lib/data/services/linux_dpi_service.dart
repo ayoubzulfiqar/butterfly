@@ -74,10 +74,17 @@ class LinuxDpiService implements IDpiService {
     _logController.add('[INFO] Initializing Linux nftables queue...');
     try {
       // 1. Setup nftables table with bypass queue
-      final nftResult = await Process.run('pkexec', ['nft', '-f', '-'], runInShell: false)
-          .catchError((_) => ProcessResult(0, 1, '', 'pkexec unavailable'));
-      if (nftResult.exitCode != 0) {
-        appLogger.info('LinuxDpiService', 'nftables bypass setup skipped: $nftScript');
+      try {
+        final nftProcess = await Process.start('pkexec', ['nft', '-f', '-'], runInShell: false);
+        nftProcess.stdin.write(nftScript);
+        await nftProcess.stdin.flush();
+        await nftProcess.stdin.close();
+        final nftExit = await nftProcess.exitCode;
+        if (nftExit != 0) {
+          appLogger.info('LinuxDpiService', 'nftables bypass setup non-zero exit ($nftExit)');
+        }
+      } catch (e) {
+        appLogger.info('LinuxDpiService', 'nftables pipe failed ($e)');
       }
       
       // If direct stdin pipe isn't available via Process.run, write ephemeral script or continue

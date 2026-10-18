@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import '../../core/utils/logger.dart';
@@ -103,8 +104,31 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
         return _splitTcp(packet, range.start, range.end, chunks);
       case TlsFragMethod.record:
       case TlsFragMethod.both:
-        return _splitTcp(packet, range.start, range.end, chunks);
+        return _splitRecord(packet, range.start, range.end, chunks);
     }
+  }
+
+  List<Uint8List> _splitRecord(Uint8List packet, int start, int end, int chunks) {
+    if (packet.length < 5 || packet[0] != 0x16) return [packet];
+    final version1 = packet[1];
+    final version2 = packet[2];
+    final payload = packet.sublist(5);
+    final relStart = (start - 5).clamp(0, payload.length);
+    final relEnd = (end - 5).clamp(relStart, payload.length);
+    final rawChunks = _splitTcp(Uint8List.fromList(payload), relStart, relEnd, chunks);
+
+    final records = <Uint8List>[];
+    for (final raw in rawChunks) {
+      final rec = Uint8List(5 + raw.length);
+      rec[0] = 0x16; // Handshake
+      rec[1] = version1;
+      rec[2] = version2;
+      rec[3] = (raw.length >> 8) & 0xff;
+      rec[4] = raw.length & 0xff;
+      rec.setRange(5, 5 + raw.length, raw);
+      records.add(rec);
+    }
+    return records;
   }
 
   List<Uint8List> _splitTcp(Uint8List packet, int start, int end, int chunks) {
@@ -158,13 +182,15 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
     // Handle standard HTTP CONNECT proxy handshake
     var handshakeHandled = false;
     Socket? upstream;
+    late final StreamSubscription<Uint8List> clientSub;
 
-    client.listen(
+    clientSub = client.listen(
       (data) async {
         if (!handshakeHandled) {
           final request = String.fromCharCodes(data);
           if (request.startsWith('CONNECT ')) {
             handshakeHandled = true;
+            clientSub.pause();
             final target = request.split(' ')[1];
             final parts = target.split(':');
             final host = parts[0];
@@ -172,6 +198,7 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
 
             try {
               upstream = await Socket.connect(host, targetPort);
+              upstream!.setOption(SocketOption.tcpNoDelay, true);
               client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
 
               upstream!.listen(
@@ -179,6 +206,7 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
                 onError: (_) => client.destroy(),
                 onDone: () => client.destroy(),
               );
+              clientSub.resume();
             } catch (e) {
               client.destroy();
             }
@@ -186,7 +214,7 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
           }
         }
 
-        // Forward data with fragmentation applied if initial packet is TLS ClientHello
+        // Forward data with fragmentation applied if packet is TLS ClientHello
         if (upstream != null) {
           final fragments = split(data, _method, chunks: _chunks);
           for (final f in fragments) {

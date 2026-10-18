@@ -55,7 +55,7 @@ void main() {
       final script = engine.buildNftablesScript(queueNum: 510, fwmark: 0x10000);
 
       expect(script, contains('table inet butterfly_dpi'));
-      expect(script, contains('queue num 510 bypass'));
+      expect(script, contains('queue flags bypass to 510'));
       expect(script, contains('oifname "lo" accept'));
       expect(script, contains('mark & 0x10000 != 0'));
     });

@@ -212,8 +212,10 @@ class SimpleShieldScreen extends StatelessWidget {
             child: _HudItem(
               icon: Icons.verified_user_rounded,
               label: 'SAFETY NET',
-              value: 'ARMED',
-              color: CyberTheme.neonEmerald,
+              value: dnsVm.isSafetyNetArmed ? 'ARMED' : 'STANDBY',
+              color: dnsVm.isSafetyNetArmed
+                  ? CyberTheme.neonEmerald
+                  : CyberTheme.cyberCyan,
             ),
           ),
         ],

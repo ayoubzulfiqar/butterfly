@@ -106,11 +106,26 @@ class WindowsDpiService with WidgetsBindingObserver implements IDpiService {
     await _startProcess(exePath, args, 'zapret2');
   }
 
+  Future<void> _cleanupOrphanWinDivert() async {
+    if (!Platform.isWindows) return;
+    try {
+      final res = await Process.run('sc', ['query', 'WinDivert']);
+      if (res.exitCode == 0 && res.stdout.toString().contains('RUNNING')) {
+        appLogger.info('WindowsDpiService', 'Stopping orphaned WinDivert driver service');
+        await Process.run('sc', ['stop', 'WinDivert']);
+      }
+    } catch (e) {
+      appLogger.warning('WindowsDpiService', 'WinDivert orphan service check: $e');
+    }
+  }
+
   Future<void> _startProcess(String exePath, List<String> args, String engineTag) async {
     if (_process != null) {
       appLogger.info('WindowsDpiService', 'DPI process is already running, stopping first');
       await stop();
     }
+
+    await _cleanupOrphanWinDivert();
 
     try {
       appLogger.info(
