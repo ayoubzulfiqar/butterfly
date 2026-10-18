@@ -91,21 +91,21 @@ class _NeonPowerShieldState extends State<NeonPowerShield>
     switch (state) {
       case PowerShieldState.off:
         return isHover
-            ? [BoxShadow(color: color.withOpacity(0.2), blurRadius: 20, spreadRadius: 2)]
+            ? [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 20, spreadRadius: 2)]
             : const [];
       case PowerShieldState.busy:
         return [
-          BoxShadow(color: color.withOpacity(0.4), blurRadius: 30, spreadRadius: 2),
-          BoxShadow(color: color.withOpacity(0.2), blurRadius: 10, spreadRadius: 1),
+          BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 30, spreadRadius: 2),
+          BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 1),
         ];
       case PowerShieldState.on:
         return [
-          BoxShadow(color: color.withOpacity(isHover ? 0.6 : 0.45), blurRadius: 40, spreadRadius: 4),
-          BoxShadow(color: color.withOpacity(0.25), blurRadius: 15, spreadRadius: 2),
+          BoxShadow(color: color.withValues(alpha: isHover ? 0.6 : 0.45), blurRadius: 40, spreadRadius: 4),
+          BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 15, spreadRadius: 2),
         ];
       case PowerShieldState.err:
         return [
-          BoxShadow(color: color.withOpacity(0.5), blurRadius: 35, spreadRadius: 3),
+          BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 35, spreadRadius: 3),
         ];
     }
   }
@@ -138,7 +138,7 @@ class _NeonPowerShieldState extends State<NeonPowerShield>
                       child: CustomPaint(
                         size: Size(widget.size + 30, widget.size + 30),
                         painter: _CelestialRingPainter(
-                          color: accent.withOpacity(widget.state == PowerShieldState.off ? 0.2 : 0.5),
+                          color: accent.withValues(alpha: widget.state == PowerShieldState.off ? 0.2 : 0.5),
                           isDotted: widget.state == PowerShieldState.busy,
                         ),
                       ),

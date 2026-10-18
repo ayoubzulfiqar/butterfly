@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:butterfly/domain/entities/network_adapter.dart';
-import 'package:butterfly/domain/services/dns_safety_net_service.dart';
 import 'package:butterfly/data/services/dns_safety_net_service_impl.dart';
 import 'package:butterfly/data/services/mock_network_service.dart';
 

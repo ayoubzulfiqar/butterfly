@@ -168,6 +168,7 @@ class _ProxyFragmentationPageState extends State<ProxyFragmentationPage> {
           color: isSelected ? AppTheme.primaryBlue : Colors.grey,
           size: 20,
         ),
+        child: const SizedBox.shrink(),
       ),
     );
   }

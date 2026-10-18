@@ -68,7 +68,7 @@ class ToolsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _cleanIps = await _cfScannerService!.scanCleanIps(limit: limit);
+      _cleanIps = await _cfScannerService.scanCleanIps(limit: limit);
     } catch (e) {
       _errorMessage = 'Failed to scan Cloudflare clean IPs: $e';
       appLogger.warning('ToolsViewModel', 'Error scanning Cloudflare IPs: $e');

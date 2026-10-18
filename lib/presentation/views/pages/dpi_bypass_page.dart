@@ -14,7 +14,6 @@ class DpiBypassPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dpiVm = context.watch<DpiViewModel>();
-    final theme = Theme.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),

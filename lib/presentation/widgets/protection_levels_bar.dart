@@ -90,8 +90,8 @@ class _LevelPillState extends State<_LevelPill> {
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
           decoration: BoxDecoration(
             color: isSelected
-                ? CyberTheme.neonEmerald.withOpacity(0.18)
-                : (_isHovered ? Colors.white.withOpacity(0.05) : Colors.transparent),
+                ? CyberTheme.neonEmerald.withValues(alpha: 0.18)
+                : (_isHovered ? Colors.white.withValues(alpha: 0.05) : Colors.transparent),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isSelected ? CyberTheme.neonEmerald : Colors.transparent,
@@ -100,7 +100,7 @@ class _LevelPillState extends State<_LevelPill> {
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: CyberTheme.neonEmerald.withOpacity(0.25),
+                      color: CyberTheme.neonEmerald.withValues(alpha: 0.25),
                       blurRadius: 12,
                       spreadRadius: 1,
                     )

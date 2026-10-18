@@ -30,7 +30,7 @@ class MainShellScreen extends StatelessWidget {
           fit: StackFit.expand,
           children: <Widget>[
             ...previousChildren,
-            if (currentChild != null) currentChild,
+            ?currentChild,
           ],
         );
       },
