@@ -31,7 +31,7 @@ class DnsResolversPage extends StatelessWidget {
               : ListView.separated(
                   padding: const EdgeInsets.all(24.0),
                   itemCount: dnsVm.filteredProviders.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, _) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final provider = dnsVm.filteredProviders[index];
                     return _buildProviderCard(context, dnsVm, provider);

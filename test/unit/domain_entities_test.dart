@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:butterfly/domain/entities/network_adapter.dart';
 import 'package:butterfly/domain/entities/dns_provider.dart';
-import 'package:butterfly/domain/entities/dpi_bypass_mode.dart';
 import 'package:butterfly/domain/entities/app_log_entry.dart';
 import 'package:butterfly/core/utils/logger.dart';
 

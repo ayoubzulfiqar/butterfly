@@ -178,10 +178,12 @@ class DpiBypassPage extends StatelessWidget {
             : null,
         title: mode.name,
         subtitle: mode.description,
-        trailing: Radio<String>(
-          value: mode.id,
-          groupValue: dpiVm.selectedMode.id,
-          onChanged: dpiVm.isRunning ? null : (_) => dpiVm.selectMode(mode),
+        trailing: Icon(
+          isSelected
+              ? Icons.radio_button_checked_rounded
+              : Icons.radio_button_off_rounded,
+          color: isSelected ? AppTheme.primaryBlue : Colors.grey,
+          size: 20,
         ),
         child: Container(
           width: double.infinity,
