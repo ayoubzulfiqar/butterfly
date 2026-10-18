@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart';
 import '../../core/utils/logger.dart';
 import '../../domain/entities/public_ip_info.dart';
 import '../../domain/entities/scheduled_shutdown_state.dart';
+import '../../domain/services/cloudflare_scanner_service.dart';
 import '../../domain/services/i_system_tools_service.dart';
 
 class ToolsViewModel extends ChangeNotifier {
   final ISystemToolsService _toolsService;
+  final ICloudflareScannerService? _cfScannerService;
 
   PublicIpInfo? _publicIpInfo;
   bool _isLoadingIp = false;
@@ -15,14 +17,31 @@ class ToolsViewModel extends ChangeNotifier {
   String? _statusMessage;
   Timer? _countdownTimer;
 
-  ToolsViewModel({required ISystemToolsService toolsService})
-      : _toolsService = toolsService;
+  List<CloudflareCleanIp> _cleanIps = [];
+  bool _isScanningIps = false;
+  double _scanProgress = 0.0;
+  StreamSubscription<double>? _progressSub;
+
+  ToolsViewModel({
+    required ISystemToolsService toolsService,
+    ICloudflareScannerService? cfScannerService,
+  })  : _toolsService = toolsService,
+        _cfScannerService = cfScannerService {
+    _progressSub = _cfScannerService?.progressStream.listen((progress) {
+      _scanProgress = progress;
+      notifyListeners();
+    });
+  }
 
   PublicIpInfo? get publicIpInfo => _publicIpInfo;
   bool get isLoadingIp => _isLoadingIp;
   ScheduledShutdownState get shutdownState => _shutdownState;
   String? get errorMessage => _errorMessage;
   String? get statusMessage => _statusMessage;
+
+  List<CloudflareCleanIp> get cleanIps => _cleanIps;
+  bool get isScanningIps => _isScanningIps;
+  double get scanProgress => _scanProgress;
 
   Future<void> refreshPublicIp() async {
     _isLoadingIp = true;
@@ -37,6 +56,24 @@ class ToolsViewModel extends ChangeNotifier {
       appLogger.warning('ToolsViewModel', 'Error fetching public IP: $e');
     } finally {
       _isLoadingIp = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> scanCloudflareIps({int limit = 10}) async {
+    if (_cfScannerService == null) return;
+    _isScanningIps = true;
+    _scanProgress = 0.0;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _cleanIps = await _cfScannerService!.scanCleanIps(limit: limit);
+    } catch (e) {
+      _errorMessage = 'Failed to scan Cloudflare clean IPs: $e';
+      appLogger.warning('ToolsViewModel', 'Error scanning Cloudflare IPs: $e');
+    } finally {
+      _isScanningIps = false;
       notifyListeners();
     }
   }
@@ -63,9 +100,12 @@ class ToolsViewModel extends ChangeNotifier {
 
     final success = await _toolsService.scheduleShutdown(delay, reason: reason);
     if (success) {
-      _shutdownState = await _toolsService.getShutdownStatus();
-      _statusMessage = 'Shutdown successfully scheduled';
-      _startCountdownTicker();
+      _shutdownState = ScheduledShutdownState.active(
+        targetTime: DateTime.now().add(delay),
+        reason: reason,
+      );
+      _statusMessage = 'System shutdown scheduled in ${delay.inMinutes} minutes';
+      _startCountdown();
     } else {
       _errorMessage = 'Failed to schedule system shutdown';
     }
@@ -80,9 +120,9 @@ class ToolsViewModel extends ChangeNotifier {
 
     final success = await _toolsService.cancelShutdown();
     if (success) {
-      _stopCountdownTicker();
       _shutdownState = const ScheduledShutdownState.inactive();
       _statusMessage = 'Scheduled shutdown cancelled';
+      _stopCountdown();
     } else {
       _errorMessage = 'Failed to cancel scheduled shutdown';
     }
@@ -90,34 +130,31 @@ class ToolsViewModel extends ChangeNotifier {
     return success;
   }
 
-  void _startCountdownTicker() {
+  void _startCountdown() {
     _countdownTimer?.cancel();
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      final remaining = _shutdownState.remainingDuration;
-      if (!_shutdownState.isActive ||
-          remaining == null ||
-          remaining.inSeconds <= 0) {
+      if (!_shutdownState.isActive) {
         timer.cancel();
+        return;
+      }
+      final remaining = _shutdownState.remainingDuration;
+      if (remaining == null || remaining.inSeconds <= 0) {
         _shutdownState = const ScheduledShutdownState.inactive();
+        timer.cancel();
       }
       notifyListeners();
     });
   }
 
-  void _stopCountdownTicker() {
+  void _stopCountdown() {
     _countdownTimer?.cancel();
     _countdownTimer = null;
   }
 
   @override
   void dispose() {
-    _stopCountdownTicker();
+    _stopCountdown();
+    _progressSub?.cancel();
     super.dispose();
-  }
-
-  void clearMessages() {
-    _errorMessage = null;
-    _statusMessage = null;
-    notifyListeners();
   }
 }
