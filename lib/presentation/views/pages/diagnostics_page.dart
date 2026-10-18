@@ -116,58 +116,60 @@ class DiagnosticsPage extends StatelessWidget {
                 ),
               ),
             )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: logs.length,
-              itemBuilder: (context, index) {
-                final log = logs[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 3.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '[${log.formattedTime}]',
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '[${log.severity.name.toUpperCase()}]',
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: _getSeverityColor(log.severity),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '[${log.tag}]',
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: AppTheme.primaryBlue,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: SelectableText(
-                          log.message,
+          : SelectionArea(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16.0),
+                itemCount: logs.length,
+                itemBuilder: (context, index) {
+                  final log = logs[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '[${log.formattedTime}]',
                           style: const TextStyle(
                             fontFamily: 'monospace',
-                            fontSize: 12,
-                            color: Color(0xFFE2E2E2),
+                            fontSize: 11,
+                            color: Colors.grey,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        const SizedBox(width: 8),
+                        Text(
+                          '[${log.severity.name.toUpperCase()}]',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _getSeverityColor(log.severity),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '[${log.tag}]',
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            color: AppTheme.primaryBlue,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            log.message,
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                              color: Color(0xFFE2E2E2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
     );
   }

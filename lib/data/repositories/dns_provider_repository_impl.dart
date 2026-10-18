@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import '../../domain/entities/dns_provider.dart';
 import '../../domain/repositories/i_dns_provider_repository.dart';
 
@@ -89,22 +91,61 @@ class DnsProviderRepositoryImpl implements IDnsProviderRepository {
     ),
   ];
 
+  final File? _storageFile;
+  bool _loaded = false;
+
+  DnsProviderRepositoryImpl({File? storageFile}) : _storageFile = storageFile;
+
   @override
   List<DnsProvider> getBuiltInProviders() => List.of(_builtInProviders);
 
+  Future<void> _ensureLoaded() async {
+    if (_loaded) return;
+    _loaded = true;
+    if (_storageFile != null && await _storageFile.exists()) {
+      try {
+        final content = await _storageFile.readAsString();
+        final List<dynamic> decoded = jsonDecode(content) as List<dynamic>;
+        _customProviders.clear();
+        for (final item in decoded) {
+          _customProviders.add(
+            DnsProvider.fromJson(item as Map<String, dynamic>),
+          );
+        }
+      } catch (_) {
+        // Fallback to empty custom list on read failure
+      }
+    }
+  }
+
+  Future<void> _saveToStorage() async {
+    if (_storageFile == null) return;
+    try {
+      final list = _customProviders.map((p) => p.toJson()).toList();
+      await _storageFile.writeAsString(jsonEncode(list));
+    } catch (_) {
+      // Storage write error handled gracefully
+    }
+  }
+
   @override
   Future<List<DnsProvider>> getAllProviders() async {
+    await _ensureLoaded();
     return [..._builtInProviders, ..._customProviders];
   }
 
   @override
   Future<void> addCustomProvider(DnsProvider provider) async {
+    await _ensureLoaded();
     _customProviders.removeWhere((p) => p.id == provider.id);
     _customProviders.add(provider);
+    await _saveToStorage();
   }
 
   @override
   Future<void> deleteCustomProvider(String id) async {
+    await _ensureLoaded();
     _customProviders.removeWhere((p) => p.id == id);
+    await _saveToStorage();
   }
 }

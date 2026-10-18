@@ -19,7 +19,17 @@ class WindowsNetworkService implements INetworkService {
   ) {
     final safeName = escapePowerShellString(adapterName);
     final allIps = [...ipv4, ...ipv6];
-    final joined = allIps.map((ip) => '"$ip"').join(',');
+    final validIpRegex = RegExp(r'^[0-9a-fA-F:.]+$');
+
+    for (final ip in allIps) {
+      final trimmed = ip.trim();
+      if (!validIpRegex.hasMatch(trimmed) ||
+          InternetAddress.tryParse(trimmed) == null) {
+        throw ArgumentError('Invalid IP address format: $ip');
+      }
+    }
+
+    final joined = allIps.map((ip) => '"${ip.trim()}"').join(',');
     return 'Set-DnsClientServerAddress -InterfaceAlias "$safeName" '
         '-ServerAddresses @($joined)';
   }

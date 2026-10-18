@@ -228,37 +228,43 @@ class DashboardPage extends StatelessWidget {
           OutlinedButton.icon(
             icon: const Icon(Icons.flash_on_rounded, size: 16),
             label: const Text('Cloudflare (1.1.1.1)'),
-            onPressed: dnsVm.isApplyingDns
+            onPressed: (dnsVm.isApplyingDns || dnsVm.providers.isEmpty)
                 ? null
                 : () {
-                    final cloudflare = dnsVm.providers.firstWhere(
-                      (p) => p.name.contains('Cloudflare'),
-                    );
-                    dnsVm.applyDns(cloudflare);
+                    final cloudflare = dnsVm.providers
+                        .where((p) => p.name.contains('Cloudflare'))
+                        .firstOrNull;
+                    if (cloudflare != null) {
+                      dnsVm.applyDns(cloudflare);
+                    }
                   },
           ),
           OutlinedButton.icon(
             icon: const Icon(Icons.security_rounded, size: 16),
             label: const Text('Google (8.8.8.8)'),
-            onPressed: dnsVm.isApplyingDns
+            onPressed: (dnsVm.isApplyingDns || dnsVm.providers.isEmpty)
                 ? null
                 : () {
-                    final google = dnsVm.providers.firstWhere(
-                      (p) => p.name.contains('Google'),
-                    );
-                    dnsVm.applyDns(google);
+                    final google = dnsVm.providers
+                        .where((p) => p.name.contains('Google'))
+                        .firstOrNull;
+                    if (google != null) {
+                      dnsVm.applyDns(google);
+                    }
                   },
           ),
           OutlinedButton.icon(
             icon: const Icon(Icons.shield_rounded, size: 16),
             label: const Text('Quad9 Malware Filter'),
-            onPressed: dnsVm.isApplyingDns
+            onPressed: (dnsVm.isApplyingDns || dnsVm.providers.isEmpty)
                 ? null
                 : () {
-                    final quad9 = dnsVm.providers.firstWhere(
-                      (p) => p.name.contains('Quad9'),
-                    );
-                    dnsVm.applyDns(quad9);
+                    final quad9 = dnsVm.providers
+                        .where((p) => p.name.contains('Quad9'))
+                        .firstOrNull;
+                    if (quad9 != null) {
+                      dnsVm.applyDns(quad9);
+                    }
                   },
           ),
           OutlinedButton.icon(

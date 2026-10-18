@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../domain/entities/dns_provider.dart';
 
@@ -107,9 +108,16 @@ class _CustomDnsDialogState extends State<CustomDnsDialog> {
                           hintText: '1.1.1.1',
                         ),
                         validator: (v) {
-                          if ((v == null || v.trim().isEmpty) &&
-                              _ipv6PrimaryController.text.trim().isEmpty) {
-                            return 'Primary IP required';
+                          if (v == null || v.trim().isEmpty) {
+                            if (_ipv6PrimaryController.text.trim().isEmpty) {
+                              return 'Primary IP required';
+                            }
+                            return null;
+                          }
+                          final parsed = InternetAddress.tryParse(v.trim());
+                          if (parsed == null ||
+                              parsed.type != InternetAddressType.IPv4) {
+                            return 'Invalid IPv4 address';
                           }
                           return null;
                         },
@@ -123,6 +131,15 @@ class _CustomDnsDialogState extends State<CustomDnsDialog> {
                           labelText: 'IPv4 Secondary',
                           hintText: '1.0.0.1',
                         ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null;
+                          final parsed = InternetAddress.tryParse(v.trim());
+                          if (parsed == null ||
+                              parsed.type != InternetAddressType.IPv4) {
+                            return 'Invalid IPv4';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],
@@ -137,6 +154,15 @@ class _CustomDnsDialogState extends State<CustomDnsDialog> {
                           labelText: 'IPv6 Primary (optional)',
                           hintText: '2606:4700::1111',
                         ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null;
+                          final parsed = InternetAddress.tryParse(v.trim());
+                          if (parsed == null ||
+                              parsed.type != InternetAddressType.IPv6) {
+                            return 'Invalid IPv6 address';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -147,6 +173,15 @@ class _CustomDnsDialogState extends State<CustomDnsDialog> {
                           labelText: 'IPv6 Secondary (optional)',
                           hintText: '2606:4700::1001',
                         ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return null;
+                          final parsed = InternetAddress.tryParse(v.trim());
+                          if (parsed == null ||
+                              parsed.type != InternetAddressType.IPv6) {
+                            return 'Invalid IPv6';
+                          }
+                          return null;
+                        },
                       ),
                     ),
                   ],

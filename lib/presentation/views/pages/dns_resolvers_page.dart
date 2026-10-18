@@ -20,6 +20,39 @@ class DnsResolversPage extends StatelessWidget {
       children: [
         _buildControlsHeader(context, dnsVm),
         const Divider(height: 1),
+        if (dnsVm.statusMessage.isNotEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            color: (dnsVm.isErrorStatus ? AppTheme.dangerRed : AppTheme.successGreen)
+                .withValues(alpha: 0.12),
+            child: Row(
+              children: [
+                Icon(
+                  dnsVm.isErrorStatus
+                      ? Icons.error_outline_rounded
+                      : Icons.check_circle_outline_rounded,
+                  color: dnsVm.isErrorStatus
+                      ? AppTheme.dangerRed
+                      : AppTheme.successGreen,
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    dnsVm.statusMessage,
+                    style: TextStyle(
+                      color: dnsVm.isErrorStatus
+                          ? AppTheme.dangerRed
+                          : AppTheme.successGreen,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         Expanded(
           child: dnsVm.filteredProviders.isEmpty
               ? const Center(

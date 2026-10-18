@@ -20,6 +20,33 @@ class DpiBypassPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeroControlCard(context, dpiVm),
+          if (dpiVm.statusMessage.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: (dpiVm.statusMessage.toLowerCase().contains('failed') ||
+                        dpiVm.statusMessage.toLowerCase().contains('error') ||
+                        dpiVm.statusMessage.toLowerCase().contains('exception'))
+                    ? AppTheme.dangerRed.withValues(alpha: 0.12)
+                    : AppTheme.successGreen.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                dpiVm.statusMessage,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: (dpiVm.statusMessage.toLowerCase().contains('failed') ||
+                          dpiVm.statusMessage.toLowerCase().contains('error') ||
+                          dpiVm.statusMessage.toLowerCase().contains('exception'))
+                      ? AppTheme.dangerRed
+                      : AppTheme.successGreen,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
           _buildExecutableStatusCard(context, dpiVm),
           const SizedBox(height: 24),

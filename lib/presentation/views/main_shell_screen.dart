@@ -34,7 +34,15 @@ class MainShellScreen extends StatelessWidget {
                       _buildTopHeader(context, navVm, dnsVm),
                       const Divider(height: 1),
                       Expanded(
-                        child: _buildCurrentPage(navVm.currentTab),
+                        child: IndexedStack(
+                          index: navVm.currentIndex,
+                          children: const [
+                            DashboardPage(),
+                            DnsResolversPage(),
+                            DpiBypassPage(),
+                            DiagnosticsPage(),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -162,18 +170,6 @@ class MainShellScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCurrentPage(NavigationTab tab) {
-    switch (tab) {
-      case NavigationTab.dashboard:
-        return const DashboardPage();
-      case NavigationTab.dnsResolvers:
-        return const DnsResolversPage();
-      case NavigationTab.dpiBypass:
-        return const DpiBypassPage();
-      case NavigationTab.diagnostics:
-        return const DiagnosticsPage();
-    }
-  }
 
   String _getTitleForTab(NavigationTab tab) {
     switch (tab) {

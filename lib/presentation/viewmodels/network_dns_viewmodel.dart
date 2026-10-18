@@ -227,14 +227,15 @@ class NetworkDnsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final updated = <DnsProvider>[];
-      for (final provider in _providers) {
-        int? ping;
-        if (provider.ipv4.isNotEmpty) {
-          ping = await networkService.pingHost(provider.ipv4.first);
-        }
-        updated.add(provider.copyWith(latencyMs: ping));
-      }
+      final updated = await Future.wait(
+        _providers.map((provider) async {
+          int? ping;
+          if (provider.ipv4.isNotEmpty) {
+            ping = await networkService.pingHost(provider.ipv4.first);
+          }
+          return provider.copyWith(latencyMs: ping);
+        }),
+      );
       _providers = updated;
     } finally {
       _isPinging = false;

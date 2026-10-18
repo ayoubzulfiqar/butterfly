@@ -3,7 +3,7 @@ class NetworkAdapter {
   final String name;
   final String interfaceDescription;
   final bool isUp;
-  final bool isDhcp;
+  final bool _interfaceDhcp;
   final List<String> ipv4Addresses;
   final List<String> ipv6Addresses;
   final List<String> dnsServers;
@@ -12,11 +12,17 @@ class NetworkAdapter {
     required this.name,
     required this.interfaceDescription,
     required this.isUp,
-    required this.isDhcp,
+    bool isDhcp = true,
     required this.ipv4Addresses,
     required this.ipv6Addresses,
     required this.dnsServers,
-  });
+  }) : _interfaceDhcp = isDhcp;
+
+  /// True if DNS is automatically obtained via DHCP (no static DNS configured).
+  bool get isDhcp => dnsServers.isEmpty;
+
+  /// True if interface IP itself is configured via DHCP.
+  bool get isInterfaceDhcp => _interfaceDhcp;
 
   bool get hasDnsConfigured => dnsServers.isNotEmpty;
 

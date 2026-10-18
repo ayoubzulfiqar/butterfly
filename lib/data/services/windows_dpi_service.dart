@@ -83,33 +83,55 @@ class WindowsDpiService with WidgetsBindingObserver implements IDpiService {
         workingDirectory: path.dirname(exePath),
       );
 
-      _runningStateController.add(true);
+      if (!_runningStateController.isClosed) {
+        _runningStateController.add(true);
+      }
       appLogger.info('WindowsDpiService', 'PID: ${_process!.pid}');
 
+      const decoder = Utf8Decoder(allowMalformed: true);
+
       _process!.stdout
-          .transform(utf8.decoder)
+          .transform(decoder)
           .transform(const LineSplitter())
-          .listen((line) {
-        _logsController.add(line);
-        appLogger.info('GoodbyeDPI', line);
-      });
+          .listen(
+        (line) {
+          if (!_logsController.isClosed) {
+            _logsController.add(line);
+          }
+          appLogger.info('GoodbyeDPI', line);
+        },
+        onError: (err) {
+          appLogger.warning('WindowsDpiService', 'Stdout stream error: $err');
+        },
+      );
 
       _process!.stderr
-          .transform(utf8.decoder)
+          .transform(decoder)
           .transform(const LineSplitter())
-          .listen((line) {
-        _logsController.add('[STDERR] $line');
-        appLogger.warning('GoodbyeDPI', line);
-      });
+          .listen(
+        (line) {
+          if (!_logsController.isClosed) {
+            _logsController.add('[STDERR] $line');
+          }
+          appLogger.warning('GoodbyeDPI', line);
+        },
+        onError: (err) {
+          appLogger.warning('WindowsDpiService', 'Stderr stream error: $err');
+        },
+      );
 
       _process!.exitCode.then((code) {
         appLogger.info('WindowsDpiService', 'Process exited with code $code');
         _process = null;
-        _runningStateController.add(false);
+        if (!_runningStateController.isClosed) {
+          _runningStateController.add(false);
+        }
       });
     } catch (e) {
       _process = null;
-      _runningStateController.add(false);
+      if (!_runningStateController.isClosed) {
+        _runningStateController.add(false);
+      }
       appLogger.severe('WindowsDpiService', 'Failed to launch DPI process: $e');
       throw Exception('Failed to start DPI bypass: $e');
     }
@@ -132,7 +154,9 @@ class WindowsDpiService with WidgetsBindingObserver implements IDpiService {
       appLogger.warning('WindowsDpiService', 'Error terminating process: $e');
     } finally {
       _process = null;
-      _runningStateController.add(false);
+      if (!_runningStateController.isClosed) {
+        _runningStateController.add(false);
+      }
       appLogger.info('WindowsDpiService', 'DPI bypass stopped');
     }
   }
