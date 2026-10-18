@@ -1,67 +1,96 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'core/utils/logger.dart';
 import 'core/themes/app_theme.dart';
-import 'data/repositories/dns_provider_repository.dart';
-import 'data/repositories/dns_service.dart';
-import 'domain/usecases/get_dns_providers_usecase.dart';
-import 'domain/usecases/change_dns_usecase.dart';
-import 'domain/usecases/restore_dns_usecase.dart';
-import 'domain/usecases/get_current_dns_usecase.dart';
-import 'domain/usecases/get_adapters_usecase.dart';
-import 'domain/usecases/start_dpi_bypass_usecase.dart';
-import 'domain/usecases/stop_dpi_bypass_usecase.dart';
-import 'presentation/viewmodels/dns_changer_viewmodel.dart';
-import 'presentation/views/dns_changer_screen.dart';
+import 'core/utils/logger.dart';
+import 'data/repositories/dns_provider_repository_impl.dart';
+import 'data/services/mock_dpi_service.dart';
+import 'data/services/mock_network_service.dart';
+import 'data/services/windows_dpi_service.dart';
+import 'data/services/windows_network_service.dart';
+import 'domain/repositories/i_dns_provider_repository.dart';
+import 'domain/services/i_dpi_service.dart';
+import 'domain/services/i_network_service.dart';
+import 'presentation/viewmodels/diagnostics_viewmodel.dart';
+import 'presentation/viewmodels/dpi_viewmodel.dart';
+import 'presentation/viewmodels/navigation_viewmodel.dart';
+import 'presentation/viewmodels/network_dns_viewmodel.dart';
+import 'presentation/views/main_shell_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   setupLogging();
-  runApp(const MyApp());
+  runApp(const ButterflyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ButterflyApp extends StatefulWidget {
+  final INetworkService? networkService;
+  final IDpiService? dpiService;
+  final IDnsProviderRepository? repository;
+
+  const ButterflyApp({
+    super.key,
+    this.networkService,
+    this.dpiService,
+    this.repository,
+  });
+
+  @override
+  State<ButterflyApp> createState() => _ButterflyAppState();
+}
+
+class _ButterflyAppState extends State<ButterflyApp> {
+  late final INetworkService _networkService;
+  late final IDpiService _dpiService;
+  late final IDnsProviderRepository _repository;
+
+  @override
+  void initState() {
+    super.initState();
+    _networkService = widget.networkService ??
+        (Platform.isWindows
+            ? WindowsNetworkService()
+            : MockNetworkService());
+
+    _dpiService = widget.dpiService ??
+        (Platform.isWindows ? WindowsDpiService() : MockDpiService());
+
+    _repository = widget.repository ?? DnsProviderRepositoryImpl();
+  }
+
+  @override
+  void dispose() {
+    _dpiService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(create: (_) => DnsProviderRepository()),
-        Provider(create: (_) => DnsService()),
-        ProxyProvider<DnsProviderRepository, GetDnsProvidersUseCase>(
-          update: (_, repo, _) => GetDnsProvidersUseCase(repo),
+        ChangeNotifierProvider<NavigationViewModel>(
+          create: (_) => NavigationViewModel(),
         ),
-        ProxyProvider<DnsService, ChangeDnsUseCase>(
-          update: (_, service, _) => ChangeDnsUseCase(service),
+        ChangeNotifierProvider<NetworkDnsViewModel>(
+          create: (_) => NetworkDnsViewModel(
+            networkService: _networkService,
+            repository: _repository,
+          )..loadInitialData(),
         ),
-        ProxyProvider<DnsService, RestoreDnsUseCase>(
-          update: (_, service, _) => RestoreDnsUseCase(service),
+        ChangeNotifierProvider<DpiViewModel>(
+          create: (_) => DpiViewModel(dpiService: _dpiService),
         ),
-        ProxyProvider<DnsService, GetCurrentDnsUseCase>(
-          update: (_, service, _) => GetCurrentDnsUseCase(service),
-        ),
-        ProxyProvider<DnsService, GetAdaptersUseCase>(
-          update: (_, service, _) => GetAdaptersUseCase(service),
-        ),
-        ProxyProvider<DnsService, StartDpiBypassUseCase>(
-          update: (_, service, _) => StartDpiBypassUseCase(service),
-        ),
-        ProxyProvider<DnsService, StopDpiBypassUseCase>(
-          update: (_, service, _) => StopDpiBypassUseCase(service),
-        ),
-        ChangeNotifierProvider<DnsChangerViewModel>(
-          create: (context) => DnsChangerViewModel(
-            dnsProviderRepository: context.read<DnsProviderRepository>(),
-            dnsService: context.read<DnsService>(),
-          ),
+        ChangeNotifierProvider<DiagnosticsViewModel>(
+          create: (_) => DiagnosticsViewModel(),
         ),
       ],
       child: MaterialApp(
-        title: 'DNS Changer',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+        title: 'Butterfly - Enterprise DNS Suite',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.fluentLight,
+        darkTheme: AppTheme.fluentDark,
         themeMode: ThemeMode.system,
-        home: const DnsChangerScreen(),
+        home: const MainShellScreen(),
       ),
     );
   }
