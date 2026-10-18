@@ -2,23 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../domain/entities/dpi_bypass_mode.dart';
+import '../../../domain/entities/zapret2_strategy.dart';
 import '../../viewmodels/dpi_viewmodel.dart';
 import '../../widgets/fluent_card.dart';
 import '../../widgets/status_badge.dart';
 
-/// Page for configuring and managing GoodbyeDPI Deep Packet Inspection bypass.
+/// Page for configuring and managing zapret2 and legacy GoodbyeDPI bypass engines.
 class DpiBypassPage extends StatelessWidget {
   const DpiBypassPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final dpiVm = context.watch<DpiViewModel>();
+    final theme = Theme.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildEngineSelector(context, dpiVm),
+          const SizedBox(height: 16),
           _buildHeroControlCard(context, dpiVm),
           if (dpiVm.statusMessage.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -48,30 +52,65 @@ class DpiBypassPage extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 20),
-          _buildExecutableStatusCard(context, dpiVm),
+          _buildCliPreviewCard(context, dpiVm),
           const SizedBox(height: 24),
-          const Text(
-            'Bypass Presets & Modes',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            dpiVm.isZapret2
+                ? 'zapret2 Protection Strategies'
+                : 'GoodbyeDPI Bypass Presets & Modes',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          ...dpiVm.availableModes.map((mode) {
-            final isSelected = dpiVm.selectedMode.id == mode.id;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: _buildModeCard(context, dpiVm, mode, isSelected),
-            );
-          }),
+          if (dpiVm.isZapret2)
+            ...Zapret2Strategies.presets.map((strat) {
+              final isSelected = dpiVm.selectedStrategy.id == strat.id;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: _buildZapret2StrategyCard(context, dpiVm, strat, isSelected),
+              );
+            })
+          else
+            ...dpiVm.availableModes.map((mode) {
+              final isSelected = dpiVm.selectedMode.id == mode.id;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: _buildModeCard(context, dpiVm, mode, isSelected),
+              );
+            }),
         ],
       ),
     );
   }
 
+  Widget _buildEngineSelector(BuildContext context, DpiViewModel dpiVm) {
+    return Row(
+      children: [
+        ChoiceChip(
+          label: const Text('zapret2 (Next-Gen)'),
+          selected: dpiVm.isZapret2,
+          onSelected: dpiVm.isRunning ? null : (_) => dpiVm.selectEngine('zapret2'),
+        ),
+        const SizedBox(width: 10),
+        ChoiceChip(
+          label: const Text('GoodbyeDPI (Legacy)'),
+          selected: !dpiVm.isZapret2,
+          onSelected: dpiVm.isRunning ? null : (_) => dpiVm.selectEngine('goodbyedpi'),
+        ),
+      ],
+    );
+  }
+
   Widget _buildHeroControlCard(BuildContext context, DpiViewModel dpiVm) {
+    final activeTitle = dpiVm.isZapret2
+        ? 'zapret2 Circumvention Engine'
+        : 'GoodbyeDPI Engine Controller';
+    final activeSubtitle = dpiVm.isZapret2
+        ? 'Next-gen packet desynchronization via nfqws2 / winws2 with multi-split & fake TLS'
+        : 'Bypass ISP censorship and deep packet inspection of TCP/UDP packets';
+
     return FluentCard(
-      title: 'GoodbyeDPI Engine Controller',
-      subtitle:
-          'Bypass ISP censorship and deep packet inspection of TCP/UDP packets',
+      title: activeTitle,
+      subtitle: activeSubtitle,
       trailing: StatusBadge(
         label: dpiVm.isRunning ? 'RUNNING' : 'STOPPED',
         isSuccess: dpiVm.isRunning,
@@ -79,27 +118,51 @@ class DpiBypassPage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Active Mode: ${dpiVm.selectedMode.name}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  dpiVm.isZapret2
+                      ? 'Active Profile: ${dpiVm.selectedStrategy.name} (${dpiVm.selectedStrategy.profile.name})'
+                      : 'Active Mode: ${dpiVm.selectedMode.name}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Arguments: ${dpiVm.selectedMode.args.join(" ")}',
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  color: Colors.grey,
+                const SizedBox(height: 4),
+                Text(
+                  dpiVm.isZapret2
+                      ? dpiVm.selectedStrategy.description
+                      : 'Arguments: ${dpiVm.selectedMode.args.join(" ")}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
-            ],
+                if (dpiVm.isZapret2) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Switch(
+                        value: dpiVm.enableQuic,
+                        onChanged: dpiVm.isRunning
+                            ? null
+                            : (val) => dpiVm.setEnableQuic(val),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'QUIC / UDP Interception',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
+          const SizedBox(width: 16),
           ElevatedButton.icon(
             icon: dpiVm.isLoading
                 ? const SizedBox(
@@ -135,57 +198,92 @@ class DpiBypassPage extends StatelessWidget {
     );
   }
 
-  Widget _buildExecutableStatusCard(
+  Widget _buildCliPreviewCard(BuildContext context, DpiViewModel dpiVm) {
+    return FluentCard(
+      title: 'Live CLI Argument Preview',
+      subtitle: 'Exact process arguments executed by the background service daemon',
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: SelectableText(
+          dpiVm.cliPreview,
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 12,
+            color: Color(0xFF00D0FF),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZapret2StrategyCard(
     BuildContext context,
     DpiViewModel dpiVm,
+    Zapret2Strategy strat,
+    bool isSelected,
   ) {
-    if (dpiVm.isExecutableAvailable) {
-      return FluentCard(
-        child: Row(
+    return InkWell(
+      onTap: dpiVm.isRunning ? null : () => dpiVm.selectStrategy(strat),
+      borderRadius: BorderRadius.circular(8),
+      child: FluentCard(
+        backgroundColor: isSelected
+            ? AppTheme.primaryBlue.withValues(alpha: 0.08)
+            : null,
+        title: strat.name,
+        subtitle: strat.description,
+        trailing: Icon(
+          isSelected
+              ? Icons.radio_button_checked_rounded
+              : Icons.radio_button_off_rounded,
+          color: isSelected ? AppTheme.primaryBlue : Colors.grey,
+          size: 20,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.check_circle_rounded,
-              color: AppTheme.successGreen,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            const Expanded(
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
               child: Text(
-                'goodbyedpi.exe binary detected and ready.',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                strat.tcpArgs.join(' '),
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 11,
+                  color: Colors.grey,
+                ),
               ),
             ),
-            OutlinedButton(
-              onPressed: dpiVm.checkExecutable,
-              child: const Text('Re-check'),
-            ),
+            if (strat.quicArgs.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'QUIC: ${strat.quicArgs.join(' ')}',
+                  style: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    color: Color(0xFF00FFA3),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
-      );
-    }
-
-    return FluentCard(
-      backgroundColor: AppTheme.warningAmber.withValues(alpha: 0.08),
-      title: 'GoodbyeDPI Binary Required',
-      trailing: OutlinedButton(
-        onPressed: dpiVm.checkExecutable,
-        child: const Text('Check Again'),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'goodbyedpi.exe was not detected in the application or assets folder.',
-            style: TextStyle(fontSize: 13, color: AppTheme.warningAmber),
-          ),
-          SizedBox(height: 8),
-          Text(
-            '1. Download GoodbyeDPI release from ValdikSS/GoodbyeDPI on GitHub.\n'
-            '2. Extract goodbyedpi.exe, WinDivert.dll, and WinDivert64.sys into the app root folder.\n'
-            '3. Run this application as Administrator.',
-            style: TextStyle(fontSize: 12, height: 1.5, color: Colors.grey),
-          ),
-        ],
       ),
     );
   }

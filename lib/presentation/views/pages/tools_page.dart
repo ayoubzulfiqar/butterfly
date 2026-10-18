@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../viewmodels/tools_viewmodel.dart';
 import '../../widgets/adapter_switcher_card.dart';
+import '../../widgets/cloudflare_scanner_card.dart';
 import '../../widgets/my_ip_card.dart';
 import '../../widgets/scheduled_shutdown_card.dart';
 
@@ -122,6 +123,8 @@ class _ToolsPageState extends State<ToolsPage> {
             const AdapterSwitcherCard(),
             const SizedBox(height: 16),
             const ScheduledShutdownCard(),
+            const SizedBox(height: 16),
+            const CloudflareScannerCard(),
           ],
         ),
       ),
