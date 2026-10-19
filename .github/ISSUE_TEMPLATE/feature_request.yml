@@ -1,0 +1,64 @@
+name: Feature Request
+description: Propose a new feature, strategy, or enhancement for Butterfly
+title: "[FEAT]: "
+labels: ["enhancement", "proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve Butterfly! Please provide as much technical context as possible for your feature proposal.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What part of the application does this proposal touch?
+      options:
+        - DNS Provider Catalog & Protocols (DoH / DoT / DNSCrypt)
+        - zapret2 DPI Bypass Strategy or Packet Mangling
+        - Driverless TLS Fragmentation & HTTP/3 QUIC
+        - Network Diagnostics & Benchmarking
+        - UI/UX & Obsidian CyberTheme
+        - Cross-Platform Hardware / OS Integration
+        - Automation / CLI Interface
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a specific censorship pattern, ISP blocking mechanism, or usability friction?
+      placeholder: "e.g., I'm encountering a new ISP DPI middlebox that blocks TLS ClientHello using..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution / Technical Design
+      description: Describe your proposed solution or how you envision the feature working.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions, tools, or workarounds?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any references, RFC citations, packet captures (pcap summaries), or screenshots.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-Submission Checklist
+      options:
+        - label: I have verified this feature is not already implemented or proposed in another issue.
+          required: true
+        - label: I am willing to help test or contribute to this feature if accepted.
+          required: false

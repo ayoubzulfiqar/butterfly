@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability Disclosure
+    url: https://github.com/DnsChanger/dnsChanger-desktop/blob/main/SECURITY.md
+    about: Please report security vulnerabilities privately via our security policy.
+  - name: GitHub Discussions & Questions
+    url: https://github.com/DnsChanger/dnsChanger-desktop/discussions
+    about: Ask questions, share ideas, and engage with the Butterfly community.
