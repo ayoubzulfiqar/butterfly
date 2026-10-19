@@ -75,7 +75,8 @@ class MainShellScreen extends StatelessWidget {
                 ),
               ],
             ),
-            bottomNavigationBar: NavigationBarTheme(
+          ),
+          bottomNavigationBar: NavigationBarTheme(
               data: NavigationBarThemeData(
                 backgroundColor: const Color(0xFF121824),
                 indicatorColor: AppTheme.primaryBlue.withValues(alpha: 0.2),

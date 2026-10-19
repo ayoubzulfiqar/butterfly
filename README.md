@@ -4,13 +4,13 @@
 
 ![Butterfly Banner](assets/banner.png)
 
-### Enterprise DNS Management & Advanced DPI Bypass Suite for Linux & Windows
+### Enterprise DNS Management & Advanced DPI Bypass Suite for Linux, Windows & Android
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.24%2B-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.5%2B-0175C2?logo=dart)](https://dart.dev)
-[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey?logo=linux&logoColor=white)](docs/ARCHITECTURE.md)
-[![Tests](https://img.shields.io/badge/Tests-90%2F90%20Passing-brightgreen.svg)](test/)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20Android-lightgrey?logo=android&logoColor=white)](docs/ARCHITECTURE.md)
+[![Tests](https://img.shields.io/badge/Tests-110%2F110%20Passing-brightgreen.svg)](test/)
 [![Analysis](https://img.shields.io/badge/Static%20Analysis-0%20Issues-brightgreen.svg)](analysis_options.yaml)
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
@@ -20,9 +20,9 @@
 
 ## Overview
 
-**Butterfly** is an enterprise-grade desktop suite engineered to combat internet censorship, DNS tampering, and deep packet inspection (DPI). Built with Flutter Desktop and modern systems networking, Butterfly delivers low-latency DNS routing, fail-open kernel packet desynchronization (`zapret2`), driverless TLS ClientHello fragmentation, and automated crash-proof network restoration.
+**Butterfly** is an enterprise-grade cross-platform suite engineered to combat internet censorship, DNS tampering, and deep packet inspection (DPI). Built with Flutter and modern systems networking, Butterfly delivers low-latency DNS routing, fail-open kernel packet desynchronization (`zapret2`), rootless Android `VpnService` DNS interception, driverless TLS ClientHello fragmentation, and automated crash-proof network restoration.
 
-Whether you need a one-click shield to browse freely or an advanced networking laboratory to analyze and circumvent censorship middleboxes, Butterfly provides a silky-smooth, hardware-accelerated experience.
+Whether you need a one-click shield to browse freely or an advanced networking laboratory to analyze and circumvent censorship middleboxes, Butterfly provides a silky-smooth, hardware-accelerated experience across desktop and mobile.
 
 ---
 
@@ -95,20 +95,25 @@ For complete architectural specifications, threading models, and sequence diagra
 
 ## Platform Support & Prerequisites
 
-| Feature | Linux | Windows |
-| :--- | :---: | :---: |
-| **DNS Management** | `resolvectl` / `nmcli` | `netsh` / `PowerShell` |
-| **DNS Safety Net** | :white_check_mark: | :white_check_mark: |
-| **zapret2 Engine** | `nfqws2` + `nftables` | `winws2.exe` + `WinDivert` |
-| **Driverless TLS Proxy** | :white_check_mark: (:8085) | :white_check_mark: (:8085) |
-| **Clean-IP Scanner** | :white_check_mark: | :white_check_mark: |
-| **Censorship Benchmark** | :white_check_mark: | :white_check_mark: |
-| **System Tools Studio** | :white_check_mark: | :white_check_mark: |
+| Feature | Linux | Windows | Android |
+| :--- | :---: | :---: | :---: |
+| **DNS Management** | `resolvectl` / `nmcli` | `netsh` / `PowerShell` | `VpnService` / TUN |
+| **DNS Safety Net** | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **zapret2 Engine** | `nfqws2` + `nftables` | `winws2.exe` + `WinDivert` | N/A (Rootless TUN) |
+| **Driverless TLS Proxy** | :white_check_mark: (:8085) | :white_check_mark: (:8085) | :white_check_mark: (:8085) |
+| **Clean-IP Scanner** | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **Censorship Benchmark** | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| **System Tools Studio** | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
 ### Build Requirements
 
 - **Flutter SDK**: 3.24.0 or higher (Channel `stable`)
 - **Dart SDK**: 3.5.0 or higher
+
+#### Android Workstations & Devices
+- Android SDK 34 (`compileSdk 34`, `minSdk 24`, `targetSdk 34`)
+- JDK 17+ and Gradle 8.x
+- Supported ABIs: `arm64-v8a`, `armeabi-v7a`, `x86_64`
 
 #### Linux Workstations
 - Clang, CMake, Ninja, GTK 3, and Netfilter development libraries:
@@ -136,18 +141,21 @@ cd dnsChanger-desktop
 # 2. Fetch dependencies
 flutter pub get
 
-# 3. Run the automated test suite (90/90 passing)
+# 3. Run the automated test suite (110/110 passing)
 flutter test
 
 # 4. Verify static analysis (0 issues)
 flutter analyze
 
-# 5. Build native application
+# 5. Build native application / APK
 # On Linux:
 flutter build linux --debug
 
 # On Windows:
 flutter build windows --debug
+
+# On Android (Debug APK):
+flutter build apk --debug
 
 # 6. Run the application
 flutter run
@@ -171,6 +179,7 @@ Explore our in-depth technical documentation:
 ## Security & Elevation Model
 
 Butterfly requires elevated privileges only for host network adapter mutations and kernel packet queue bindings:
+- **Android**: Operates completely rootless via Android's native `VpnService` API to establish a local TUN interface capturing DNS traffic, requiring only the standard system VPN confirmation dialog (`ACTION_VPN_PREPARE`).
 - **Linux**: Interacts through `resolvectl` and `pkexec nft` with explicit argument passing. Shell string injection is strictly mitigated via argument arrays and regex whitelisting.
 - **Windows**: Prompts for UAC elevation when executing adapter DNS changes via `netsh` and initializing the `WinDivert` driver service.
 - **Driverless Fallback**: The **Proxy & TLS Frag** workspace operates purely in user-space, requiring no root or administrator permissions.
