@@ -53,10 +53,12 @@ class MainShellScreen extends StatelessWidget {
         if (isCompact) {
           return Scaffold(
             key: const ValueKey('studio_shell'),
-            body: Column(
-              children: [
-                ElevationBanner(isElevated: dnsVm.isAdministrator),
-                _buildCompactHeader(context, navVm, dnsVm),
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  ElevationBanner(isElevated: dnsVm.isAdministrator),
+                  _buildCompactHeader(context, navVm, dnsVm),
                 const Divider(height: 1),
                 Expanded(
                   child: IndexedStack(
