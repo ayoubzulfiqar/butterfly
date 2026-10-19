@@ -31,6 +31,7 @@ void main() {
       expect(args, contains('--fwmark=0x10000'));
       expect(args, contains('--user=daemon'));
       expect(args, contains('--filter-tcp=80,443'));
+      expect(args, contains('--dpi-desync-cutoff=d4'));
       // TCP strategy args
       expect(args, contains('--lua-desync=fake:blob=fake_default_tls:badsum'));
       expect(args, contains('--lua-desync=multidisorder:pos=1,midsld'));
@@ -85,6 +86,7 @@ void main() {
       expect(args, contains('--wf-udp-out=443'));
       expect(args, contains('--wf-dup-check=1'));
       expect(args, contains('--filter-tcp=80,443'));
+      expect(args, contains('--dpi-desync-cutoff=d4'));
       expect(args, contains('--new'));
       expect(args, contains('--filter-l7=quic'));
     });

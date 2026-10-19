@@ -37,6 +37,7 @@ class Zapret2WindowsEngine implements DpiEngine {
     args.addAll([
       '--wf-dup-check=1',
       '--filter-tcp=80,443',
+      '--dpi-desync-cutoff=d4',
     ]);
 
     if (config.strategy.profile == Zapret2Profile.custom && config.customArgs.isNotEmpty) {

@@ -31,6 +31,7 @@ class Zapret2LinuxEngine implements DpiEngine {
       '--fwmark=0x${fwmark.toRadixString(16)}',
       '--user=daemon',
       '--filter-tcp=80,443',
+      '--dpi-desync-cutoff=d4',
     ];
 
     if (config.strategy.profile == Zapret2Profile.custom && config.customArgs.isNotEmpty) {

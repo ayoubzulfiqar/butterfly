@@ -181,6 +181,7 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
   void _handleClient(Socket client) {
     // Handle standard HTTP CONNECT proxy handshake
     var handshakeHandled = false;
+    var clientHelloProcessed = false;
     Socket? upstream;
     late final StreamSubscription<Uint8List> clientSub;
 
@@ -214,13 +215,23 @@ class TlsFragmenterServiceImpl implements ITlsFragmenterService {
           }
         }
 
-        // Forward data with fragmentation applied if packet is TLS ClientHello
+        // Forward data: fragment ONLY the initial TLS ClientHello, and stream
+        // all subsequent payloads (file downloads, GET requests, TLS application data)
+        // cleanly without packet splitting or delay.
         if (upstream != null) {
-          final fragments = split(data, _method, chunks: _chunks);
-          for (final f in fragments) {
-            upstream!.add(f);
-            await upstream!.flush();
+          if (!clientHelloProcessed) {
+            final range = sniRange(data);
+            if (range.found) {
+              clientHelloProcessed = true;
+              final fragments = split(data, _method, chunks: _chunks);
+              for (final f in fragments) {
+                upstream!.add(f);
+                await upstream!.flush();
+              }
+              return;
+            }
           }
+          upstream!.add(data);
         }
       },
       onError: (_) {
