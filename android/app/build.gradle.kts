@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "org.butterfly.app"
-    compileSdk = 34
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -42,6 +42,10 @@ kotlin {
     compilerOptions {
         jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
 }
 
 flutter {
