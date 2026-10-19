@@ -89,9 +89,12 @@ endif()
 
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/windows/")
-install(DIRECTORY "${NATIVE_ASSETS_DIR}"
-   DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
-   COMPONENT Runtime)
+if(EXISTS "${NATIVE_ASSETS_DIR}")
+  install(DIRECTORY "${NATIVE_ASSETS_DIR}"
+     DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+     COMPONENT Runtime
+     OPTIONAL)
+endif()
 
 # Fully re-copy the assets directory on each build to avoid having stale files
 # from a previous install.
@@ -107,20 +110,26 @@ install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
 
-# Install GoodbyeDPI files
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/x86_64/goodbyedpi.exe"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/x86_64/WinDivert.dll"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/x86_64/WinDivert64.sys"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
-# Install blacklist files
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/russia-blacklist.txt"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/russia-youtube.txt"
-  DESTINATION "${CMAKE_INSTALL_PREFIX}"
-  COMPONENT Runtime)
+# Install GoodbyeDPI files if present
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI")
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/x86_64/goodbyedpi.exe"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+    COMPONENT Runtime
+    OPTIONAL)
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/x86_64/WinDivert.dll"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+    COMPONENT Runtime
+    OPTIONAL)
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/x86_64/WinDivert64.sys"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+    COMPONENT Runtime
+    OPTIONAL)
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/russia-blacklist.txt"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+    COMPONENT Runtime
+    OPTIONAL)
+  install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../assets/GoodByeDPI/russia-youtube.txt"
+    DESTINATION "${CMAKE_INSTALL_PREFIX}"
+    COMPONENT Runtime
+    OPTIONAL)
+endif()
