@@ -26,7 +26,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.24.x'
           cache: true
 
       - name: Install Linux Build Dependencies
@@ -65,7 +64,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.24.x'
           cache: true
 
       - name: Install Flutter Dependencies
@@ -105,7 +103,6 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.24.x'
           cache: true
 
       - name: Install Flutter Dependencies
