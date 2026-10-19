@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Butterfly Banner](https://raw.githubusercontent.com/DnsChanger/dnsChanger-desktop/main/assets/banner.png)
+![Butterfly Banner](assets/banner.png)
 
 ### Enterprise DNS Management & Advanced DPI Bypass Suite for Linux & Windows
 

@@ -46,5 +46,5 @@ app.*.map.json
 
 
 providers.md
-assets
+assets/bin/
 .superpowers/
