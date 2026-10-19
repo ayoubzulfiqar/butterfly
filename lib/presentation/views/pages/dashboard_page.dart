@@ -86,13 +86,15 @@ class DashboardPage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              '(${adapter.interfaceDescription})',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
+                            Expanded(
+                              child: Text(
+                                '(${adapter.interfaceDescription})',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -115,102 +117,114 @@ class DashboardPage extends StatelessWidget {
   ) {
     final adapter = dnsVm.selectedAdapter;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Current DNS Status Card
-        Expanded(
-          flex: 3,
-          child: FluentCard(
-            title: 'Current DNS Resolver',
-            subtitle: 'Active resolver configuration for ${adapter?.name ?? "N/A"}',
-            trailing: StatusBadge(
-              label: (adapter?.isDhcp ?? true) ? 'Automatic (DHCP)' : 'Custom DNS',
-              isSuccess: !(adapter?.isDhcp ?? true),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (dnsVm.currentDnsServers.isEmpty)
-                  const Text(
-                    'Obtaining DNS automatically from your ISP (DHCP).',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  )
-                else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: dnsVm.currentDnsServers.map((ip) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Text(
-                          ip,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryBlue,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-              ],
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 650;
+
+        final dnsCard = FluentCard(
+          title: 'Current DNS Resolver',
+          subtitle: 'Active resolver configuration for ${adapter?.name ?? "N/A"}',
+          trailing: StatusBadge(
+            label: (adapter?.isDhcp ?? true) ? 'Automatic (DHCP)' : 'Custom DNS',
+            isSuccess: !(adapter?.isDhcp ?? true),
           ),
-        ),
-        const SizedBox(width: 16),
-        // DPI Bypass Mini Card
-        Expanded(
-          flex: 2,
-          child: FluentCard(
-            title: 'DPI Bypass Status',
-            subtitle: 'GoodbyeDPI background driver',
-            trailing: StatusBadge(
-              label: dpiVm.isRunning ? 'Active' : 'Stopped',
-              isSuccess: dpiVm.isRunning,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Mode: ${dpiVm.selectedMode.name}',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (dnsVm.currentDnsServers.isEmpty)
+                const Text(
+                  'Obtaining DNS automatically from your ISP (DHCP).',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                )
+              else
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: dnsVm.currentDnsServers.map((ip) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryBlue.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        ip,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryBlue,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: dpiVm.isLoading
-                        ? null
-                        : dpiVm.isRunning
-                            ? dpiVm.stopBypass
-                            : dpiVm.startBypass,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: dpiVm.isRunning
-                          ? AppTheme.dangerRed
-                          : AppTheme.primaryBlue,
-                    ),
-                    child: Text(
-                      dpiVm.isRunning ? 'Stop Bypass' : 'Start Bypass',
-                    ),
+            ],
+          ),
+        );
+
+        final dpiCard = FluentCard(
+          title: 'DPI Bypass Status',
+          subtitle: 'GoodbyeDPI background driver',
+          trailing: StatusBadge(
+            label: dpiVm.isRunning ? 'Active' : 'Stopped',
+            isSuccess: dpiVm.isRunning,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Mode: ${dpiVm.selectedMode.name}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: dpiVm.isLoading
+                      ? null
+                      : dpiVm.isRunning
+                          ? dpiVm.stopBypass
+                          : dpiVm.startBypass,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: dpiVm.isRunning
+                        ? AppTheme.dangerRed
+                        : AppTheme.primaryBlue,
+                  ),
+                  child: Text(
+                    dpiVm.isRunning ? 'Stop Bypass' : 'Start Bypass',
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+
+        if (isNarrow) {
+          return Column(
+            children: [
+              dnsCard,
+              const SizedBox(height: 16),
+              dpiCard,
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 3, child: dnsCard),
+            const SizedBox(width: 16),
+            Expanded(flex: 2, child: dpiCard),
+          ],
+        );
+      },
     );
   }
 

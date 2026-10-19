@@ -46,39 +46,190 @@ class MainShellScreen extends StatelessWidget {
     NavigationViewModel navVm,
     NetworkDnsViewModel dnsVm,
   ) {
-    return Scaffold(
-      key: const ValueKey('studio_shell'),
-      body: Column(
-        children: [
-          ElevationBanner(isElevated: dnsVm.isAdministrator),
-          Expanded(
-            child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600;
+
+        if (isCompact) {
+          return Scaffold(
+            key: const ValueKey('studio_shell'),
+            body: Column(
               children: [
-                _buildNavigationRail(context, navVm),
-                const VerticalDivider(width: 1),
+                ElevationBanner(isElevated: dnsVm.isAdministrator),
+                _buildCompactHeader(context, navVm, dnsVm),
+                const Divider(height: 1),
                 Expanded(
-                  child: Column(
-                    children: [
-                      _buildTopHeader(context, navVm, dnsVm),
-                      const Divider(height: 1),
-                      Expanded(
-                        child: IndexedStack(
-                          index: navVm.currentIndex,
-                          children: const [
-                            DashboardPage(),
-                            DnsResolversPage(),
-                            DpiBypassPage(),
-                            ProxyFragmentationPage(),
-                            ToolsPage(),
-                            DiagnosticsPage(),
-                          ],
-                        ),
-                      ),
+                  child: IndexedStack(
+                    index: navVm.currentIndex,
+                    children: const [
+                      DashboardPage(),
+                      DnsResolversPage(),
+                      DpiBypassPage(),
+                      ProxyFragmentationPage(),
+                      ToolsPage(),
+                      DiagnosticsPage(),
                     ],
                   ),
                 ),
               ],
             ),
+            bottomNavigationBar: NavigationBarTheme(
+              data: NavigationBarThemeData(
+                backgroundColor: const Color(0xFF121824),
+                indicatorColor: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.primaryBlue,
+                    );
+                  }
+                  return const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.grey,
+                  );
+                }),
+                iconTheme: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const IconThemeData(
+                      color: AppTheme.primaryBlue,
+                      size: 22,
+                    );
+                  }
+                  return const IconThemeData(color: Colors.grey, size: 20);
+                }),
+              ),
+              child: NavigationBar(
+                selectedIndex: navVm.currentIndex,
+                onDestinationSelected: navVm.selectIndex,
+                backgroundColor: const Color(0xFF121824),
+                indicatorColor: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.dashboard_outlined),
+                    selectedIcon: Icon(Icons.dashboard_rounded),
+                    label: 'Dashboard',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.dns_outlined),
+                    selectedIcon: Icon(Icons.dns_rounded),
+                    label: 'DNS Resolvers',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.shield_outlined),
+                    selectedIcon: Icon(Icons.shield_rounded),
+                    label: 'DPI Bypass',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.alt_route_outlined),
+                    selectedIcon: Icon(Icons.alt_route_rounded),
+                    label: 'Proxy & TLS Frag',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.build_outlined),
+                    selectedIcon: Icon(Icons.build_rounded),
+                    label: 'Tools',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.terminal_outlined),
+                    selectedIcon: Icon(Icons.terminal_rounded),
+                    label: 'Diagnostics',
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          key: const ValueKey('studio_shell'),
+          body: Column(
+            children: [
+              ElevationBanner(isElevated: dnsVm.isAdministrator),
+              Expanded(
+                child: Row(
+                  children: [
+                    _buildNavigationRail(context, navVm),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildTopHeader(context, navVm, dnsVm),
+                          const Divider(height: 1),
+                          Expanded(
+                            child: IndexedStack(
+                              index: navVm.currentIndex,
+                              children: const [
+                                DashboardPage(),
+                                DnsResolversPage(),
+                                DpiBypassPage(),
+                                ProxyFragmentationPage(),
+                                ToolsPage(),
+                                DiagnosticsPage(),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactHeader(
+    BuildContext context,
+    NavigationViewModel navVm,
+    NetworkDnsViewModel dnsVm,
+  ) {
+    final title = _getTitleForTab(navVm.currentTab);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      color: Theme.of(context).cardTheme.color,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'Simple Shield',
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.shield_outlined, size: 14),
+              label: const Text('Simple Shield'),
+              onPressed: () => navVm.setViewMode(AppViewMode.simple),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: dnsVm.isFlushingCache
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.cleaning_services_rounded, size: 18),
+            tooltip: 'Flush Cache',
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(),
+            onPressed: dnsVm.isFlushingCache ? null : dnsVm.flushDnsCache,
           ),
         ],
       ),

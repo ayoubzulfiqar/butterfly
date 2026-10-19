@@ -86,46 +86,106 @@ class DnsResolversPage extends StatelessWidget {
       color: Theme.of(context).cardTheme.color,
       child: Column(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  onChanged: dnsVm.setSearchQuery,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search_rounded, size: 18),
-                    hintText: 'Search resolvers by name or features...',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              ElevatedButton.icon(
-                icon: dnsVm.isPinging
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.speed_rounded, size: 16),
-                label: const Text('Test Speeds'),
-                onPressed: dnsVm.isPinging ? null : dnsVm.runLatencyBenchmark,
-              ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Add Custom'),
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (_) => CustomDnsDialog(
-                      onAdd: (custom) => dnsVm.addCustomProvider(custom),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 600;
+
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    TextField(
+                      onChanged: dnsVm.setSearchQuery,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search_rounded, size: 18),
+                        hintText: 'Search resolvers by name or features...',
+                      ),
                     ),
-                  );
-                },
-              ),
-            ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: dnsVm.isPinging
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.speed_rounded, size: 16),
+                            label: const Text('Test Speeds'),
+                            onPressed: dnsVm.isPinging
+                                ? null
+                                : dnsVm.runLatencyBenchmark,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.add_rounded, size: 16),
+                            label: const Text('Add Custom'),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => CustomDnsDialog(
+                                  onAdd: (custom) =>
+                                      dnsVm.addCustomProvider(custom),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      onChanged: dnsVm.setSearchQuery,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.search_rounded, size: 18),
+                        hintText: 'Search resolvers by name or features...',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  ElevatedButton.icon(
+                    icon: dnsVm.isPinging
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.speed_rounded, size: 16),
+                    label: const Text('Test Speeds'),
+                    onPressed:
+                        dnsVm.isPinging ? null : dnsVm.runLatencyBenchmark,
+                  ),
+                  const SizedBox(width: 10),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.add_rounded, size: 16),
+                    label: const Text('Add Custom'),
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => CustomDnsDialog(
+                          onAdd: (custom) => dnsVm.addCustomProvider(custom),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -289,52 +349,53 @@ class DnsResolversPage extends StatelessWidget {
             }).toList(),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (provider.ipv4.isNotEmpty) ...[
-                      const Text(
-                        'IPv4 Addresses:',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
+          LayoutBuilder(
+            builder: (context, cardConstraints) {
+              final isNarrow = cardConstraints.maxWidth < 450;
+              final ipContent = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (provider.ipv4.isNotEmpty) ...[
+                    const Text(
+                      'IPv4 Addresses:',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
                       ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 8,
-                        children: provider.ipv4.map((ip) {
-                          return _buildIpChip(context, ip);
-                        }).toList(),
-                      ),
-                    ],
-                    if (provider.ipv6.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        'IPv6 Addresses:',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 8,
-                        children: provider.ipv6.map((ip) {
-                          return _buildIpChip(context, ip);
-                        }).toList(),
-                      ),
-                    ],
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: provider.ipv4.map((ip) {
+                        return _buildIpChip(context, ip);
+                      }).toList(),
+                    ),
                   ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
+                  if (provider.ipv6.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'IPv6 Addresses:',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: provider.ipv6.map((ip) {
+                        return _buildIpChip(context, ip);
+                      }).toList(),
+                    ),
+                  ],
+                ],
+              );
+
+              final applyButton = ElevatedButton.icon(
                 icon: dnsVm.isApplyingDns
                     ? const SizedBox(
                         width: 14,
@@ -349,8 +410,30 @@ class DnsResolversPage extends StatelessWidget {
                 onPressed: dnsVm.isApplyingDns
                     ? null
                     : () => dnsVm.applyDns(provider),
-              ),
-            ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ipContent,
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: applyButton,
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: ipContent),
+                  const SizedBox(width: 16),
+                  applyButton,
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -379,12 +462,15 @@ class DnsResolversPage extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              ip,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            Flexible(
+              child: Text(
+                ip,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 4),

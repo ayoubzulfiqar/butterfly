@@ -21,70 +21,92 @@ class SimpleShieldScreen extends StatelessWidget {
         ? PowerShieldState.busy
         : (dpiVm.isRunning ? PowerShieldState.on : PowerShieldState.off);
 
-    return Scaffold(
-      backgroundColor: CyberTheme.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(context, navVm),
-            Expanded(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      NeonPowerShield(
-                        state: shieldState,
-                        onTap: () => dpiVm.toggleBypass(),
-                        size: 170.0,
-                        label: dpiVm.isRunning ? 'PROTECTED' : 'UNPROTECTED',
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600;
+        final isNarrow = constraints.maxWidth < 400;
+
+        return Scaffold(
+          backgroundColor: CyberTheme.background,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildTopBar(context, navVm, isCompact: isCompact),
+                Expanded(
+                  child: Center(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isNarrow ? 16 : 24,
+                        vertical: isNarrow ? 12 : 16,
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        dpiVm.isRunning
-                            ? 'Active Bypass Protection'
-                            : 'Protection Disabled',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: dpiVm.isRunning
-                              ? CyberTheme.neonEmerald
-                              : CyberTheme.textPrimary,
-                          letterSpacing: 0.5,
-                        ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          NeonPowerShield(
+                            state: shieldState,
+                            onTap: () => dpiVm.toggleBypass(),
+                            size: isNarrow ? 140.0 : 170.0,
+                            label: dpiVm.isRunning ? 'PROTECTED' : 'UNPROTECTED',
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            dpiVm.isRunning
+                                ? 'Active Bypass Protection'
+                                : 'Protection Disabled',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: isNarrow ? 18 : 20,
+                              fontWeight: FontWeight.w700,
+                              color: dpiVm.isRunning
+                                  ? CyberTheme.neonEmerald
+                                  : CyberTheme.textPrimary,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            dpiVm.isRunning
+                                ? 'Traffic desynchronized with ${dpiVm.selectedStrategy.name} profile'
+                                : 'Tap shield to activate zapret2 desynchronization',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: CyberTheme.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: ProtectionLevelsBar(
+                              selectedProfile: dpiVm.selectedProfile,
+                              onProfileSelected: (profile) => dpiVm.selectProfile(profile),
+                            ),
+                          ),
+                          const SizedBox(height: 36),
+                          _buildTelemetryHud(context, dnsVm, dpiVm, isNarrow: isNarrow),
+                        ],
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        dpiVm.isRunning
-                            ? 'Traffic desynchronized with ${dpiVm.selectedStrategy.name} profile'
-                            : 'Tap shield to activate zapret2 desynchronization',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: CyberTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 28),
-                      ProtectionLevelsBar(
-                        selectedProfile: dpiVm.selectedProfile,
-                        onProfileSelected: (profile) => dpiVm.selectProfile(profile),
-                      ),
-                      const SizedBox(height: 36),
-                      _buildTelemetryHud(context, dnsVm, dpiVm),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildTopBar(BuildContext context, NavigationViewModel navVm) {
+  Widget _buildTopBar(
+    BuildContext context,
+    NavigationViewModel navVm, {
+    bool isCompact = false,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isCompact ? 16 : 24,
+        vertical: isCompact ? 12 : 16,
+      ),
       decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: CyberTheme.border, width: 1),
@@ -93,48 +115,58 @@ class SimpleShieldScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: CyberTheme.neonEmerald.withAlpha(30),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: CyberTheme.neonEmerald.withAlpha(80),
-                    width: 1,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.shield_rounded,
-                  color: CyberTheme.neonEmerald,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'BUTTERFLY SHIELD',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                      color: CyberTheme.textPrimary,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: CyberTheme.neonEmerald.withAlpha(30),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: CyberTheme.neonEmerald.withAlpha(80),
+                      width: 1,
                     ),
                   ),
-                  Text(
-                    'Cyber Circumvention Engine',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: CyberTheme.textMuted,
-                    ),
+                  child: const Icon(
+                    Icons.shield_rounded,
+                    color: CyberTheme.neonEmerald,
+                    size: 20,
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                        'BUTTERFLY SHIELD',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                          color: CyberTheme.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Cyber Circumvention Engine',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: CyberTheme.textMuted,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Tooltip(
             message: 'Open Studio',
             child: OutlinedButton.icon(
@@ -146,12 +178,15 @@ class SimpleShieldScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompact ? 10 : 14,
+                  vertical: isCompact ? 8 : 10,
+                ),
               ),
               icon: const Icon(Icons.dashboard_customize_rounded, size: 16),
-              label: const Text(
-                'Open Studio',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              label: Text(
+                isCompact ? 'Studio' : 'Open Studio',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -163,8 +198,9 @@ class SimpleShieldScreen extends StatelessWidget {
   Widget _buildTelemetryHud(
     BuildContext context,
     NetworkDnsViewModel dnsVm,
-    DpiViewModel dpiVm,
-  ) {
+    DpiViewModel dpiVm, {
+    bool isNarrow = false,
+  }) {
     final adapterName = dnsVm.selectedAdapter?.name ?? 'Default Interface';
     final activeDns = dnsVm.currentDnsServers.isNotEmpty
         ? dnsVm.currentDnsServers.first
@@ -172,7 +208,10 @@ class SimpleShieldScreen extends StatelessWidget {
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 580),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isNarrow ? 12 : 20,
+        vertical: isNarrow ? 10 : 14,
+      ),
       decoration: BoxDecoration(
         color: CyberTheme.surfaceTranslucent,
         borderRadius: BorderRadius.circular(14),
@@ -192,7 +231,7 @@ class SimpleShieldScreen extends StatelessWidget {
             width: 1,
             height: 28,
             color: CyberTheme.border,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
+            margin: EdgeInsets.symmetric(horizontal: isNarrow ? 4 : 8),
           ),
           Expanded(
             child: _HudItem(
@@ -206,7 +245,7 @@ class SimpleShieldScreen extends StatelessWidget {
             width: 1,
             height: 28,
             color: CyberTheme.border,
-            margin: const EdgeInsets.symmetric(horizontal: 8),
+            margin: EdgeInsets.symmetric(horizontal: isNarrow ? 4 : 8),
           ),
           Expanded(
             child: _HudItem(
