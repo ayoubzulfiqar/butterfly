@@ -16,34 +16,35 @@ class PlatformServiceFactory {
     bool? isLinux,
     bool? isAndroid,
   }) {
-    final win = isWindows ?? Platform.isWindows;
-    final linux = isLinux ?? Platform.isLinux;
-    final android = isAndroid ?? Platform.isAndroid;
+    if (isAndroid == true) return AndroidNetworkService();
+    if (isLinux == true) return LinuxNetworkService();
+    if (isWindows == true) return WindowsNetworkService();
 
-    if (win) {
-      return WindowsNetworkService();
-    } else if (linux) {
-      return LinuxNetworkService();
-    } else if (android) {
-      return AndroidNetworkService();
-    } else {
+    if (isAndroid == false && isLinux == false && isWindows == false) {
       return MockNetworkService();
     }
+
+    if (Platform.isAndroid) return AndroidNetworkService();
+    if (Platform.isLinux) return LinuxNetworkService();
+    if (Platform.isWindows) return WindowsNetworkService();
+
+    return MockNetworkService();
   }
 
   static IDpiService createDpiService({
     bool? isWindows,
     bool? isLinux,
   }) {
-    final win = isWindows ?? Platform.isWindows;
-    final linux = isLinux ?? Platform.isLinux;
+    if (isWindows == true) return WindowsDpiService();
+    if (isLinux == true) return LinuxDpiService();
 
-    if (win) {
-      return WindowsDpiService();
-    } else if (linux) {
-      return LinuxDpiService();
-    } else {
+    if (isWindows == false && isLinux == false) {
       return MockDpiService();
     }
+
+    if (Platform.isWindows) return WindowsDpiService();
+    if (Platform.isLinux) return LinuxDpiService();
+
+    return MockDpiService();
   }
 }

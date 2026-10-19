@@ -185,6 +185,13 @@ void main() {
       expect(service, isA<AndroidNetworkService>());
     });
 
+    test('creates AndroidNetworkService with only isAndroid: true without specifying others', () {
+      final service = PlatformServiceFactory.createNetworkService(
+        isAndroid: true,
+      );
+      expect(service, isA<AndroidNetworkService>());
+    });
+
     test('creates WindowsNetworkService when isWindows is true', () {
       final service = PlatformServiceFactory.createNetworkService(
         isAndroid: false,

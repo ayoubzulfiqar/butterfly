@@ -65,12 +65,16 @@ class MainActivity : FlutterActivity() {
             pendingSecondaryDns = secondary
             startActivityForResult(prepareIntent, VPN_REQUEST_CODE)
         } else {
+            ButterflyVpnService.isRunning = true
+            ButterflyVpnService.activeDns = listOfNotNull(primary, secondary?.takeIf { it.isNotBlank() })
             startVpnService(primary, secondary)
             result.success(true)
         }
     }
 
     private fun handleStopVpn(result: MethodChannel.Result) {
+        ButterflyVpnService.isRunning = false
+        ButterflyVpnService.activeDns = emptyList()
         val intent = Intent(this, ButterflyVpnService::class.java).apply {
             action = ButterflyVpnService.ACTION_DISCONNECT
         }
@@ -103,6 +107,8 @@ class MainActivity : FlutterActivity() {
             pendingSecondaryDns = null
 
             if (resultCode == Activity.RESULT_OK) {
+                ButterflyVpnService.isRunning = true
+                ButterflyVpnService.activeDns = listOfNotNull(primary, secondary?.takeIf { it.isNotBlank() })
                 startVpnService(primary, secondary)
                 res?.success(true)
             } else {
