@@ -10,7 +10,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.24%2B-02569B?logo=flutter)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.5%2B-0175C2?logo=dart)](https://dart.dev)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows%20%7C%20Android-lightgrey?logo=android&logoColor=white)](docs/ARCHITECTURE.md)
-[![Tests](https://img.shields.io/badge/Tests-110%2F110%20Passing-brightgreen.svg)](test/)
+[![Tests](https://img.shields.io/badge/Tests-111%2F111%20Passing-brightgreen.svg)](test/)
 [![Analysis](https://img.shields.io/badge/Static%20Analysis-0%20Issues-brightgreen.svg)](analysis_options.yaml)
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
@@ -111,7 +111,7 @@ For complete architectural specifications, threading models, and sequence diagra
 - **Dart SDK**: 3.5.0 or higher
 
 #### Android Workstations & Devices
-- Android SDK 34 (`compileSdk 34`, `minSdk 24`, `targetSdk 34`)
+- Android SDK 35 (`compileSdk 35`, `minSdk 24`, `targetSdk 34`)
 - JDK 17+ and Gradle 8.x
 - Supported ABIs: `arm64-v8a`, `armeabi-v7a`, `x86_64`
 
@@ -135,13 +135,13 @@ For complete architectural specifications, threading models, and sequence diagra
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/DnsChanger/dnsChanger-desktop.git
-cd dnsChanger-desktop
+git clone https://github.com/butterfly/butterfly.git
+cd butterfly
 
 # 2. Fetch dependencies
 flutter pub get
 
-# 3. Run the automated test suite (110/110 passing)
+# 3. Run the automated test suite (111/111 passing)
 flutter test
 
 # 4. Verify static analysis (0 issues)

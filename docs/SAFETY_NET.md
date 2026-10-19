@@ -33,9 +33,10 @@ stateDiagram-v2
 
 Before any DNS mutation is executed against the host operating system, the current state of the active network interface is captured into an immutable data structure and serialized to `state.json`:
 
-### 2.1 File Location
+### 2.1 File Location & Platform Isolation
 - **Linux**: `${XDG_DATA_HOME:-~/.local/share}/butterfly/state.json` (or `/tmp/butterfly_safety_net/` during test sandboxing).
 - **Windows**: `%LOCALAPPDATA%\Butterfly\state.json`.
+- **Android**: Non-destructive by design. Android's native `VpnService` establishes an ephemeral virtual TUN interface. When the VPN service terminates (or if the application process is force-stopped by the user/OS), the Linux kernel automatically tears down the TUN interface and removes the custom DNS routing tables, seamlessly reverting the device to default Wi-Fi/Cellular DHCP without mutating persistent host configuration files.
 
 ### 2.2 JSON Schema
 ```json

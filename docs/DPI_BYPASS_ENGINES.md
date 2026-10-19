@@ -4,8 +4,11 @@ Deep Packet Inspection (DPI) systems deployed by Internet Service Providers (ISP
 
 Butterfly incorporates three multi-tiered DPI circumvention mechanisms:
 1. **`zapret2` Engine** (`nfqws2` on Linux, `winws2.exe` on Windows): Low-level kernel packet queue interception and state desynchronization.
-2. **Driverless TLS Fragmentation Proxy** (`127.0.0.1:8085`): Pure-Dart user-space HTTP CONNECT proxy splitting the TLS ClientHello at the SNI boundary.
+2. **Driverless TLS Fragmentation Proxy** (`127.0.0.1:8085`): Pure-Dart user-space HTTP CONNECT proxy splitting the TLS ClientHello at the SNI boundary. Fully supported across Linux, Windows, and unrooted Android devices.
 3. **Legacy GoodbyeDPI Engine** (`goodbyedpi.exe`): Backward-compatible fallback for legacy Windows systems.
+
+> [!NOTE]
+> **Mobile Platform Scope**: While `zapret2` kernel packet filtering requires root/superuser capabilities on Android (via `iptables`/`nftables`), Butterfly provides zero-root circumvention on Android through the pure-Dart userspace **TLS Fragmentation Proxy** (`127.0.0.1:8085`) and split-tunnel **VpnService** DNS routing.
 
 ---
 

@@ -105,6 +105,12 @@ sudo dnf install -y \
 - **PowerShell**: 5.1+ or PowerShell 7+.
 - **Administrator Elevation**: Required to test `netsh` adapter mutations and `WinDivert` packet filtering.
 
+### Android Workstation Setup
+
+- **Java Development Kit**: OpenJDK 17 or higher (`JAVA_HOME` configured).
+- **Android SDK**: API level 34/35 (`compileSdk 35`, `targetSdk 34`, `minSdk 24`).
+- **Android Studio** or Android command-line tools with platform-tools and Gradle installed.
+
 ### Cloning & Building
 
 ```bash
@@ -115,17 +121,24 @@ cd butterfly
 # 2. Install dependencies
 flutter pub get
 
-# 3. Run unit and widget tests
+# 3. Run unit and widget tests (111/111 passing)
 flutter test
 
-# 4. Verify static analysis
+# 4. Verify static analysis (0 issues)
 flutter analyze
 
-# 5. Build native binaries
-# Linux:
+# 5. Build native binaries & packages
+# Linux desktop:
 flutter build linux --debug
-# Windows:
+
+# Windows desktop:
 flutter build windows --debug
+
+# Android debug APK:
+flutter build apk --debug
+
+# Android Kotlin compilation:
+cd android && ./gradlew compileDebugKotlin && cd ..
 ```
 
 ---
@@ -153,7 +166,7 @@ lib/
 
 ### Platform-Adaptive Service Isolation
 
-Platform-specific logic must be isolated in the `data/services/` layer and resolved via `PlatformServiceFactory`. UI code must **never** call `Platform.isLinux` or `Platform.isWindows` directly to execute raw shell commands.
+Platform-specific logic must be isolated in the `data/services/` layer and resolved via `PlatformServiceFactory`. UI code must **never** call `Platform.isLinux`, `Platform.isWindows`, or `Platform.isAndroid` directly to execute raw commands or channel logic.
 
 ### Defensive Network & Elevation Safety
 
@@ -163,7 +176,9 @@ Platform-specific logic must be isolated in the `data/services/` layer and resol
    - Privilege escalation must use `pkexec` on Linux with explicit arguments.
    - Never pass unsanitized user inputs or shell concatenations into `Process.start` or `Process.run`. All string inputs (interface names, DNS IP addresses) must pass strict regex validation.
 3. **Bulletproof Safety Net**:
-   - Every DNS mutation must snapshot existing adapter state to `state.json` via `IDnsSafetyNetService`. If the app crashes, the snapshot is automatically recovered and applied on next launch.
+   - Every desktop DNS mutation must snapshot existing adapter state to `state.json` via `IDnsSafetyNetService`. If the app crashes, the snapshot is automatically recovered and applied on next launch.
+4. **Rootless Mobile Architecture**:
+   - Android functionality must never require root/su or busybox binaries. Use standard Android `VpnService` with explicit user intent consent (`prepare`), forward DNS queries via protected UDP sockets, and preserve line-rate non-DNS app traffic.
 
 ---
 
