@@ -1,0 +1,183 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version tag (e.g. 1.6.9)'
+        required: true
+        default: '1.6.9'
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Build Linux x86_64
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.24.x'
+          cache: true
+
+      - name: Install Linux Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Build Linux Release Bundle
+        run: flutter build linux --release
+
+      - name: Package Linux Binary Archive
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION="${VERSION#v}"
+          cd build/linux/x64/release/bundle
+          tar -czvf "../../../../butterfly-${VERSION}-linux-x64.tar.gz" *
+          cd ../../../..
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: butterfly-linux-x64
+          path: butterfly-*-linux-x64.tar.gz
+
+  build-windows:
+    name: Build Windows x64
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.24.x'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Build Windows Release Binary
+        run: flutter build windows --release
+
+      - name: Package Windows Binary Archive
+        shell: pwsh
+        run: |
+          $ver = if ("${{ github.event.inputs.version }}" -ne "") { "${{ github.event.inputs.version }}" } else { "${{ github.ref_name }}" }
+          $ver = $ver.TrimStart('v')
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "butterfly-$ver-windows-x64.zip"
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: butterfly-windows-x64
+          path: butterfly-*-windows-x64.zip
+
+  build-android:
+    name: Build Android APKs
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.24.x'
+          cache: true
+
+      - name: Install Flutter Dependencies
+        run: flutter pub get
+
+      - name: Build Universal Android APK
+        run: flutter build apk --release
+
+      - name: Build Per-ABI Android APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: Package Android Artifacts
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION="${VERSION#v}"
+          cp build/app/outputs/flutter-apk/app-release.apk "butterfly-${VERSION}-android-universal.apk"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "butterfly-${VERSION}-android-arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "butterfly-${VERSION}-android-armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk "butterfly-${VERSION}-android-x86_64.apk"
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: butterfly-android-apks
+          path: butterfly-*-android-*.apk
+
+  publish-release:
+    name: Create GitHub Release
+    needs: [build-linux, build-windows, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets/
+          merge-multiple: true
+
+      - name: Generate Checksums & Set Environment
+        run: |
+          VERSION="${{ github.event.inputs.version || github.ref_name }}"
+          VERSION="${VERSION#v}"
+          TAG="v${VERSION}"
+          echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+
+          cd release-assets
+          sha256sum butterfly-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          cd ..
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: "Butterfly v${{ env.RELEASE_VERSION }}"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: release-assets/*
+          body: |
+            ## Butterfly v${{ env.RELEASE_VERSION }}
+
+            Enterprise DNS Management & Advanced zapret2 DPI Bypass Suite for Linux, Windows & Android.
+
+            ### Included Packages & Binaries
+            - **Linux (x86_64)**: `butterfly-${{ env.RELEASE_VERSION }}-linux-x64.tar.gz`
+            - **Windows (x64)**: `butterfly-${{ env.RELEASE_VERSION }}-windows-x64.zip`
+            - **Android Universal APK**: `butterfly-${{ env.RELEASE_VERSION }}-android-universal.apk`
+            - **Android ARM64 APK**: `butterfly-${{ env.RELEASE_VERSION }}-android-arm64-v8a.apk`
+            - **Android ARMv7 APK**: `butterfly-${{ env.RELEASE_VERSION }}-android-armeabi-v7a.apk`
+            - **Android x86_64 APK**: `butterfly-${{ env.RELEASE_VERSION }}-android-x86_64.apk`
+            - **Integrity**: `SHA256SUMS.txt`
